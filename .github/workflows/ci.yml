@@ -22,5 +22,5 @@ jobs:
         run: npm run typecheck
       - name: Unit tests (core, cobertura >= 90%)
         run: npm run test:core
-      - name: Build
-        run: npm run build --workspace @habit/core
+      - name: Build (core + web)
+        run: npm run build

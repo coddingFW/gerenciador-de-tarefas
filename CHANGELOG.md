@@ -14,3 +14,8 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/) e o projeto adot
   proteção de role/plan), outbox de domain events, views de métricas
   (DAU/WAU/MAU/retenção), feature flags com rollout determinístico, e teste
   pgTAP de isolamento entre usuários.
+- `@habit/core`: use-case `LogExecution` (registro direto de hábito).
+- `apps/web`: SPA Preact + Vite + Tailwind (mobile-first), arquitetura
+  local-first com Dexie/IndexedDB, `SyncEngine` idempotente, autenticação
+  Google (com modo demo offline), e telas **Hoje** e **Painel** consumindo o
+  domínio `@habit/core`.

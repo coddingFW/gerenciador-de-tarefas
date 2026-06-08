@@ -36,8 +36,15 @@ supabase/     schema SQL + RLS + Edge Functions
 - [x] Scaffold do monorepo (npm workspaces)
 - [x] `@habit/core` com testes (25 testes, 100% linhas / 96% branches)
 - [x] `supabase/` — schema, RLS, outbox, views de métricas, feature flags + teste de isolamento
-- [ ] `apps/web` — UI + infra + sync engine
+- [x] `apps/web` — Preact + Tailwind, adapters local-first (Dexie), SyncEngine,
+      auth (Google/demo), telas Hoje e Painel. Build: ~48KB gzip.
 - [ ] E2E (Playwright)
+- [ ] Edge Functions (event-dispatcher, recompute-metrics, admin-api)
+
+> O app roda offline-first por padrão: sem `VITE_SUPABASE_*` configurado, usa um
+> usuário de demonstração local e o IndexedDB como fonte da verdade. Com as
+> variáveis preenchidas, ativa Google OAuth e o SyncEngine drena a fila para o
+> Supabase. Fluxo validado no navegador (criar hábito → concluir → painel).
 
 > ⚠️ As migrations ainda não foram aplicadas contra um Postgres local (Supabase
 > CLI ausente neste ambiente). Aplicar com `supabase start && supabase db reset`
