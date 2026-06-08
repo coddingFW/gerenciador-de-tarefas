@@ -35,9 +35,13 @@ supabase/     schema SQL + RLS + Edge Functions
 ## Estado atual
 - [x] Scaffold do monorepo (npm workspaces)
 - [x] `@habit/core` com testes (25 testes, 100% linhas / 96% branches)
-- [ ] `supabase/` — migrations + RLS
+- [x] `supabase/` — schema, RLS, outbox, views de métricas, feature flags + teste de isolamento
 - [ ] `apps/web` — UI + infra + sync engine
 - [ ] E2E (Playwright)
+
+> ⚠️ As migrations ainda não foram aplicadas contra um Postgres local (Supabase
+> CLI ausente neste ambiente). Aplicar com `supabase start && supabase db reset`
+> e validar a RLS com `supabase test db`.
 
 ## Nota sobre o gerenciador de pacotes
 O design previa `pnpm`; o ambiente local não permitiu ativar o corepack, então
