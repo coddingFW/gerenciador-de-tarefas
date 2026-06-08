@@ -21,3 +21,5 @@ export { CreateGoal } from "./application/use-cases/CreateGoal.js";
 export type { CreateGoalInput } from "./application/use-cases/CreateGoal.js";
 export { CompleteTask } from "./application/use-cases/CompleteTask.js";
 export type { CompleteTaskInput } from "./application/use-cases/CompleteTask.js";
+export { LogExecution } from "./application/use-cases/LogExecution.js";
+export type { LogExecutionInput } from "./application/use-cases/LogExecution.js";
