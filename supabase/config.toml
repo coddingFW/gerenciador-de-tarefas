@@ -1,0 +1,18 @@
+# Configuração do projeto Supabase local (subset relevante).
+# Aplicar com: supabase start && supabase db reset
+project_id = "habit-tracker"
+
+[db]
+port = 54322
+major_version = 15
+
+[auth]
+enabled = true
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["http://localhost:5173"]
+
+# Login com Google (Fase 1 §7.1). Preencha as credenciais via variáveis de ambiente.
+[auth.external.google]
+enabled = true
+client_id = "env(SUPABASE_AUTH_GOOGLE_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_GOOGLE_SECRET)"
