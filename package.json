@@ -1,0 +1,30 @@
+{
+  "name": "habit-tracker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "SPA mobile-first de hábitos, tarefas e métricas de produtividade. Offline-first.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace @habit/web",
+    "build": "npm run build --workspace @habit/core && npm run build --workspace @habit/web",
+    "lint": "eslint . --max-warnings=0",
+    "format": "prettier --write .",
+    "test": "npm run test --workspaces --if-present",
+    "test:core": "npm run test --workspace @habit/core",
+    "typecheck": "tsc -b"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.5.0",
+    "@commitlint/config-conventional": "^19.5.0",
+    "prettier": "^3.3.3",
+    "typescript": "^5.6.3"
+  }
+}
