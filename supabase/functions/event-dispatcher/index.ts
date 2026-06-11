@@ -39,14 +39,22 @@ function affectedDay(ev: DomainEventRow): string {
     case "TaskCompleted":
       return (p.due_date as string) ?? todayUtc();
     case "GoalCreated":
-      return todayUtc(); // muda o denominador de aderência de hoje
+    case "GoalUpdated":
+    case "GoalArchived":
+      return todayUtc(); // muda o denominador/alvo de aderência de hoje
     default:
       return todayUtc();
   }
 }
 
 /** Eventos que disparam recálculo de score. */
-const SCORING_EVENTS = new Set(["ExecutionLogged", "TaskCompleted", "GoalCreated"]);
+const SCORING_EVENTS = new Set([
+  "ExecutionLogged",
+  "TaskCompleted",
+  "GoalCreated",
+  "GoalUpdated",
+  "GoalArchived",
+]);
 
 Deno.serve(async (req: Request): Promise<Response> => {
   if (req.method !== "POST") return json(405, { error: "method_not_allowed" });

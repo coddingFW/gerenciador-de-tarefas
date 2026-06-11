@@ -3,7 +3,7 @@
 -- Roda com: supabase test db (pgTAP).
 
 begin;
-select plan(5);
+select plan(7);
 
 insert into auth.users (id, email)
   values ('44444444-4444-4444-4444-444444444444', 'o@test.dev');
@@ -51,6 +51,24 @@ select is(
   (select count(*)::int from public.domain_events
      where event_type = 'TaskCompleted' and aggregate_id = 'c0000000-0000-0000-0000-000000000001'),
   1, 'update sem mudanca de status nao reemite TaskCompleted'
+);
+
+-- ---- goal update (conteúdo) → GoalUpdated ----
+update public.goals set title = 'ler mais'
+  where id = 'b0000000-0000-0000-0000-000000000001';
+select is(
+  (select count(*)::int from public.domain_events
+     where event_type = 'GoalUpdated' and aggregate_id = 'b0000000-0000-0000-0000-000000000001'),
+  1, 'edicao de conteudo emite GoalUpdated'
+);
+
+-- ---- goal archive (active → false) → GoalArchived ----
+update public.goals set active = false, archived_at = now()
+  where id = 'b0000000-0000-0000-0000-000000000001';
+select is(
+  (select count(*)::int from public.domain_events
+     where event_type = 'GoalArchived' and aggregate_id = 'b0000000-0000-0000-0000-000000000001'),
+  1, 'arquivamento emite GoalArchived'
 );
 
 select * from finish();

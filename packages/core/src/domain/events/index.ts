@@ -10,6 +10,8 @@ export type DomainEventType =
   | "TaskCompleted"
   | "TaskSkipped"
   | "GoalCreated"
+  | "GoalUpdated"
+  | "GoalArchived"
   | "GoalAchieved"
   | "ExecutionLogged"
   | "StreakStarted"

@@ -30,3 +30,7 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/) e o projeto adot
   `ExecutionLogged`, `TaskCompleted`) na mesma transação da mutação, com teste
   pgTAP, e Edge Function `event-dispatcher` (Deno) que drena `domain_events` e
   recalcula o score diário do usuário/dia afetado (entrega at-least-once).
+- `@habit/core`: use-cases `EditGoal` e `ArchiveGoal` (excluir = arquivar/soft
+  delete, com restauração), com testes; eventos `GoalUpdated`/`GoalArchived`.
+- `apps/web`: edição inline e arquivamento de hábitos na tela **Hoje**
+  (componente `GoalRow`); trigger de outbox para updates de `goals`.

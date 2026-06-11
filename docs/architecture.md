@@ -42,6 +42,8 @@ supabase/     schema SQL + RLS + Edge Functions
       e `recompute-metrics` (Edge Function), com teste pgTAP streak SQL × domínio.
 - [x] Outbox event-driven — triggers que emitem `domain_events` na transação +
       `event-dispatcher` (Edge Function) que drena a fila e recalcula o score.
+- [x] CRUD de hábitos — use-cases `EditGoal`/`ArchiveGoal` (excluir = arquivar)
+      + edição inline e arquivamento na tela Hoje (`GoalRow`).
 - [ ] E2E (Playwright)
 - [ ] Edge Functions restantes (admin-api)
 

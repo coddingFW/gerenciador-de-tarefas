@@ -1,4 +1,4 @@
-import { CompleteTask, CreateGoal, LogExecution } from "@habit/core";
+import { ArchiveGoal, CompleteTask, CreateGoal, EditGoal, LogExecution } from "@habit/core";
 import { SystemClock } from "../infrastructure/adapters/SystemClock";
 import { CryptoIdGenerator } from "../infrastructure/adapters/CryptoIdGenerator";
 import { LocalEventBus } from "../infrastructure/adapters/LocalEventBus";
@@ -25,6 +25,8 @@ const logs = new LocalExecutionLogRepository();
 
 export const container = {
   createGoal: new CreateGoal(goals, bus, clock, ids),
+  editGoal: new EditGoal(goals, bus),
+  archiveGoal: new ArchiveGoal(goals, bus, clock),
   logExecution: new LogExecution(goals, logs, bus, clock),
   completeTask: new CompleteTask(tasks, logs, bus, clock),
   sync: new SyncEngine(supabase),

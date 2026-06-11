@@ -3,12 +3,7 @@ import { localDB } from "../../../infrastructure/persistence/db";
 import { container } from "../../../lib/container";
 import type { CurrentUser } from "../../../lib/auth";
 import { AddGoalForm } from "./AddGoalForm";
-
-const FREQUENCY_LABEL: Record<string, string> = {
-  daily: "Diário",
-  weekly: "Semanal",
-  monthly: "Mensal",
-};
+import { GoalRow } from "./GoalRow";
 
 /** US-03/US-04: tela do dia. Conclusão em 1 toque, otimista e offline. */
 export function TodayPage({ user }: { user: CurrentUser }) {
@@ -61,36 +56,15 @@ export function TodayPage({ user }: { user: CurrentUser }) {
           </p>
         ) : (
           <ul class="flex flex-col gap-2">
-            {goals.map((g) => {
-              const done = doneGoalIds.has(g.id);
-              return (
-                <li
-                  key={g.id}
-                  class="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3 shadow-sm"
-                >
-                  <div class="min-w-0">
-                    <p class={`truncate text-sm font-medium ${done ? "text-slate-400 line-through" : "text-slate-800"}`}>
-                      {g.title}
-                    </p>
-                    <p class="text-xs text-slate-500">
-                      {FREQUENCY_LABEL[g.frequency]}
-                      {g.targetMinutes ? ` · meta ${g.targetMinutes} min` : ""}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => void complete(g.id)}
-                    disabled={done}
-                    class={`ml-3 shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium ${
-                      done
-                        ? "cursor-default bg-emerald-100 text-emerald-700"
-                        : "bg-brand text-white hover:bg-brand-dark"
-                    }`}
-                  >
-                    {done ? "✓ Feito" : "Concluir"}
-                  </button>
-                </li>
-              );
-            })}
+            {goals.map((g) => (
+              <GoalRow
+                key={g.id}
+                goal={g}
+                done={doneGoalIds.has(g.id)}
+                user={user}
+                onComplete={() => void complete(g.id)}
+              />
+            ))}
           </ul>
         )}
       </section>
