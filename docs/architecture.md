@@ -44,7 +44,9 @@ supabase/     schema SQL + RLS + Edge Functions
       `event-dispatcher` (Edge Function) que drena a fila e recalcula o score.
 - [x] CRUD de hábitos — use-cases `EditGoal`/`ArchiveGoal` (excluir = arquivar)
       + edição inline e arquivamento na tela Hoje (`GoalRow`).
-- [ ] E2E (Playwright)
+- [x] PWA instalável e offline-first (`vite-plugin-pwa`/Workbox: app-shell em
+      cache + manifest); IndexedDB como fonte da verdade dos dados.
+- [x] E2E (Playwright) — ciclo de vida do hábito em modo demo, job `e2e` no CI.
 - [ ] Edge Functions restantes (admin-api)
 
 ### Derivação server-side (regra inviolável #2)

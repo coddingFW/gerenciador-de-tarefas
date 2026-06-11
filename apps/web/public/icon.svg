@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Habit Tracker">
+  <rect width="512" height="512" fill="#0ea5e9"/>
+  <path d="M214 356 L120 262a22 22 0 0 1 31-31l63 63 147-147a22 22 0 0 1 31 31L214 356Z" fill="#ffffff"/>
+</svg>

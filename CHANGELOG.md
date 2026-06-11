@@ -34,3 +34,8 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/) e o projeto adot
   delete, com restauração), com testes; eventos `GoalUpdated`/`GoalArchived`.
 - `apps/web`: edição inline e arquivamento de hábitos na tela **Hoje**
   (componente `GoalRow`); trigger de outbox para updates de `goals`.
+- `apps/web`: PWA instalável e offline-first de verdade — `vite-plugin-pwa`
+  (Workbox) pré-cacheia o app-shell e os assets, com manifest e ícone; o
+  IndexedDB segue como fonte da verdade dos dados.
+- `apps/web`: testes E2E (Playwright) cobrindo o ciclo de vida do hábito
+  (criar → concluir → editar → arquivar) em modo demo offline; job `e2e` no CI.
