@@ -47,7 +47,8 @@ supabase/     schema SQL + RLS + Edge Functions
 - [x] PWA instalável e offline-first (`vite-plugin-pwa`/Workbox: app-shell em
       cache + manifest); IndexedDB como fonte da verdade dos dados.
 - [x] E2E (Playwright) — ciclo de vida do hábito em modo demo, job `e2e` no CI.
-- [ ] Edge Functions restantes (admin-api)
+- [x] Edge Functions completas — `recompute-metrics`, `event-dispatcher` e
+      `admin-api` (painel admin: métricas + feature flags com auditoria).
 
 ### Derivação server-side (regra inviolável #2)
 Streak e score são **derivados no servidor** a partir dos `execution_logs`

@@ -39,3 +39,6 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/) e o projeto adot
   IndexedDB segue como fonte da verdade dos dados.
 - `apps/web`: testes E2E (Playwright) cobrindo o ciclo de vida do hábito
   (criar → concluir → editar → arquivar) em modo demo offline; job `e2e` no CI.
+- `supabase/functions/admin-api`: Edge Function (Deno) do painel admin —
+  autoriza por JWT + `role = 'admin'`, expõe as views administrativas e o
+  gerenciamento de feature flags com auditoria; teste pgTAP do modelo de acesso.
