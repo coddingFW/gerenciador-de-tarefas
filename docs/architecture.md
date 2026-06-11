@@ -40,8 +40,10 @@ supabase/     schema SQL + RLS + Edge Functions
       auth (Google/demo), telas Hoje e Painel. Build: ~48KB gzip.
 - [x] Métricas server-side — `recompute_streak` (trigger), `compute_daily_score`
       e `recompute-metrics` (Edge Function), com teste pgTAP streak SQL × domínio.
+- [x] Outbox event-driven — triggers que emitem `domain_events` na transação +
+      `event-dispatcher` (Edge Function) que drena a fila e recalcula o score.
 - [ ] E2E (Playwright)
-- [ ] Edge Functions restantes (event-dispatcher, admin-api)
+- [ ] Edge Functions restantes (admin-api)
 
 ### Derivação server-side (regra inviolável #2)
 Streak e score são **derivados no servidor** a partir dos `execution_logs`

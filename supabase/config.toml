@@ -17,7 +17,10 @@ enabled = true
 client_id = "env(SUPABASE_AUTH_GOOGLE_CLIENT_ID)"
 secret = "env(SUPABASE_AUTH_GOOGLE_SECRET)"
 
-# Edge Functions. recompute-metrics faz sua própria autorização (service_role),
-# por isso desativamos a verificação de JWT do gateway — o acesso é server-only.
+# Edge Functions. Fazem sua própria autorização (service_role), por isso
+# desativamos a verificação de JWT do gateway — o acesso é server-only.
 [functions.recompute-metrics]
+verify_jwt = false
+
+[functions.event-dispatcher]
 verify_jwt = false

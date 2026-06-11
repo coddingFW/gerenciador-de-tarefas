@@ -26,3 +26,7 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/) e o projeto adot
 - `supabase/functions/recompute-metrics`: Edge Function (Deno) que orquestra os
   jobs de agregação (backfill de streaks, score diário, refresh de views),
   protegida por `service_role` e pensada para execução agendada.
+- `supabase/`: produção do Transactional Outbox via triggers (`GoalCreated`,
+  `ExecutionLogged`, `TaskCompleted`) na mesma transação da mutação, com teste
+  pgTAP, e Edge Function `event-dispatcher` (Deno) que drena `domain_events` e
+  recalcula o score diário do usuário/dia afetado (entrega at-least-once).
