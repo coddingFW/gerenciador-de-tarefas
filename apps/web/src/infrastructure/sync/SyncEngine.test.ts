@@ -168,3 +168,99 @@ describe("SyncEngine.pull", () => {
     expect(logs[0]!.id).toBe("local-id");
   });
 });
+
+const remoteGoal = (over: Record<string, unknown> = {}) => ({
+  id: "g1",
+  user_id: "u1",
+  category_id: null,
+  title: "Do servidor",
+  description: null,
+  type: "habit",
+  frequency: "daily",
+  target_count: 1,
+  target_minutes: null,
+  active: true,
+  archived_at: null,
+  created_at: "2026-06-01T00:00:00.000Z",
+  ...over,
+});
+
+describe("SyncEngine.handleRealtimeChange", () => {
+  beforeEach(clearDB);
+  const engine = () => new SyncEngine(fakeSupabase({}));
+
+  it("INSERT/UPDATE aplica a linha do servidor localmente", async () => {
+    await engine().handleRealtimeChange({
+      table: "goals",
+      eventType: "INSERT",
+      new: remoteGoal(),
+      old: {},
+    });
+    expect(await localDB.goals.get("g1")).toMatchObject({ title: "Do servidor", _sync: 1 });
+  });
+
+  it("UPDATE não sobrescreve um registro local pendente", async () => {
+    await localDB.goals.put({
+      id: "g1",
+      userId: "u1",
+      categoryId: null,
+      title: "Edição local",
+      description: null,
+      type: "habit",
+      frequency: "daily",
+      targetCount: 1,
+      targetMinutes: null,
+      active: true,
+      archivedAt: null,
+      createdAt: "2026-06-01T00:00:00.000Z",
+      _sync: 0,
+    });
+    await engine().handleRealtimeChange({
+      table: "goals",
+      eventType: "UPDATE",
+      new: remoteGoal({ title: "Sobrescrito" }),
+      old: {},
+    });
+    expect((await localDB.goals.get("g1"))?.title).toBe("Edição local");
+  });
+
+  it("DELETE remove o registro local sincronizado", async () => {
+    await localDB.categories.put({
+      id: "c1",
+      userId: "u1",
+      name: "Saúde",
+      color: null,
+      icon: null,
+      archived: false,
+      sortOrder: 0,
+      _sync: 1,
+    });
+    await engine().handleRealtimeChange({
+      table: "categories",
+      eventType: "DELETE",
+      new: {},
+      old: { id: "c1" },
+    });
+    expect(await localDB.categories.get("c1")).toBeUndefined();
+  });
+
+  it("DELETE preserva um registro local pendente", async () => {
+    await localDB.categories.put({
+      id: "c1",
+      userId: "u1",
+      name: "Pendente",
+      color: null,
+      icon: null,
+      archived: false,
+      sortOrder: 0,
+      _sync: 0,
+    });
+    await engine().handleRealtimeChange({
+      table: "categories",
+      eventType: "DELETE",
+      new: {},
+      old: { id: "c1" },
+    });
+    expect(await localDB.categories.get("c1")).toBeDefined();
+  });
+});

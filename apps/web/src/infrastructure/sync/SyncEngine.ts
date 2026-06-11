@@ -1,5 +1,7 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import { localDB } from "../persistence/db";
+import type { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
+import type { Table } from "dexie";
+import type { ExecutionSource, GoalFrequency, TaskStatus } from "@habit/core";
+import { localDB, type SyncState } from "../persistence/db";
 
 export interface SyncStatus {
   online: boolean;
@@ -11,6 +13,65 @@ export interface SyncStatus {
 
 type Listener = (status: SyncStatus) => void;
 
+// Linhas como o Postgres/Supabase as devolve (snake_case), tanto no pull quanto
+// nos eventos de realtime.
+interface RemoteProfile {
+  id: string;
+  timezone: string | null;
+}
+interface RemoteCategory {
+  id: string;
+  user_id: string;
+  name: string;
+  color: string | null;
+  icon: string | null;
+  archived: boolean;
+  sort_order: number;
+}
+interface RemoteGoal {
+  id: string;
+  user_id: string;
+  category_id: string | null;
+  title: string;
+  description: string | null;
+  type: "habit" | "one_off";
+  frequency: GoalFrequency;
+  target_count: number;
+  target_minutes: number | null;
+  active: boolean;
+  archived_at: string | null;
+  created_at: string;
+}
+interface RemoteTask {
+  id: string;
+  user_id: string;
+  goal_id: string | null;
+  category_id: string | null;
+  title: string;
+  due_date: string | null;
+  status: TaskStatus;
+  estimated_minutes: number | null;
+  completed_at: string | null;
+}
+interface RemoteLog {
+  id: string;
+  user_id: string;
+  goal_id: string | null;
+  task_id: string | null;
+  occurred_on: string;
+  minutes_spent: number;
+  source: ExecutionSource;
+  client_event_id: string;
+}
+
+/** Forma mínima de um evento `postgres_changes` do Supabase Realtime. */
+export interface RealtimeChange {
+  table: string;
+  eventType: "INSERT" | "UPDATE" | "DELETE";
+  new: Record<string, unknown>;
+  old: Record<string, unknown>;
+}
+
 /**
  * Motor de sincronização (Fase 1 §8.3). Drena os registros locais pendentes
  * (`_sync = 0`) para o Supabase quando há rede, marcando-os como sincronizados.
@@ -21,6 +82,7 @@ export class SyncEngine {
   private running = false;
   private readonly listeners = new Set<Listener>();
   private status: SyncStatus;
+  private channel: RealtimeChannel | null = null;
 
   constructor(private readonly db: SupabaseClient | null) {
     this.status = {
@@ -116,105 +178,195 @@ export class SyncEngine {
     if (!this.db) return;
     const { data, error } = await this.db.from("profiles").select("id, timezone");
     if (error) throw error;
-    for (const r of data ?? []) {
-      if (r.timezone == null) continue;
-      const local = await localDB.profiles.get(r.id);
-      if (local && local._sync === 0) continue;
-      await localDB.profiles.put({ id: r.id, timezone: r.timezone, _sync: 1 });
-    }
+    for (const r of (data ?? []) as RemoteProfile[]) await this.applyProfile(r);
   }
 
   private async pullCategories(): Promise<void> {
     if (!this.db) return;
     const { data, error } = await this.db.from("categories").select("*");
     if (error) throw error;
-    for (const r of data ?? []) {
-      const local = await localDB.categories.get(r.id);
-      if (local && local._sync === 0) continue;
-      await localDB.categories.put({
-        id: r.id,
-        userId: r.user_id,
-        name: r.name,
-        color: r.color,
-        icon: r.icon,
-        archived: r.archived,
-        sortOrder: r.sort_order,
-        _sync: 1,
-      });
-    }
+    for (const r of (data ?? []) as RemoteCategory[]) await this.applyCategory(r);
   }
 
   private async pullGoals(): Promise<void> {
     if (!this.db) return;
     const { data, error } = await this.db.from("goals").select("*");
     if (error) throw error;
-    for (const r of data ?? []) {
-      const local = await localDB.goals.get(r.id);
-      if (local && local._sync === 0) continue;
-      await localDB.goals.put({
-        id: r.id,
-        userId: r.user_id,
-        categoryId: r.category_id,
-        title: r.title,
-        description: r.description,
-        type: r.type,
-        frequency: r.frequency,
-        targetCount: r.target_count,
-        targetMinutes: r.target_minutes,
-        active: r.active,
-        archivedAt: r.archived_at,
-        createdAt: r.created_at,
-        _sync: 1,
-      });
-    }
+    for (const r of (data ?? []) as RemoteGoal[]) await this.applyGoal(r);
   }
 
   private async pullTasks(): Promise<void> {
     if (!this.db) return;
     const { data, error } = await this.db.from("tasks").select("*");
     if (error) throw error;
-    for (const r of data ?? []) {
-      const local = await localDB.tasks.get(r.id);
-      if (local && local._sync === 0) continue;
-      await localDB.tasks.put({
-        id: r.id,
-        userId: r.user_id,
-        goalId: r.goal_id,
-        categoryId: r.category_id,
-        title: r.title,
-        dueDate: r.due_date,
-        status: r.status,
-        estimatedMinutes: r.estimated_minutes,
-        completedAt: r.completed_at,
-        _sync: 1,
-      });
-    }
+    for (const r of (data ?? []) as RemoteTask[]) await this.applyTask(r);
   }
 
-  /** Logs são imutáveis e idempotentes por (userId, clientEventId): se já existe
-   *  localmente, nunca reescreve (evita duplicar com id de servidor diferente). */
   private async pullExecutionLogs(): Promise<void> {
     if (!this.db) return;
     const { data, error } = await this.db.from("execution_logs").select("*");
     if (error) throw error;
-    for (const r of data ?? []) {
-      const existing = await localDB.executionLogs
-        .where("[userId+clientEventId]")
-        .equals([r.user_id, r.client_event_id])
-        .first();
-      if (existing) continue;
-      await localDB.executionLogs.put({
-        id: r.id,
-        userId: r.user_id,
-        goalId: r.goal_id,
-        taskId: r.task_id,
-        occurredOn: r.occurred_on,
-        minutesSpent: r.minutes_spent,
-        source: r.source,
-        clientEventId: r.client_event_id,
-        _sync: 1,
-      });
+    for (const r of (data ?? []) as RemoteLog[]) await this.applyExecutionLog(r);
+  }
+
+  // --- apply: aplica UMA linha remota ao Dexie. Reusado por pull e realtime.
+  // Regra: não sobrescreve registro local pendente (`_sync = 0`); marca `_sync = 1`.
+
+  private async applyProfile(r: RemoteProfile): Promise<void> {
+    if (r.timezone == null) return;
+    const local = await localDB.profiles.get(r.id);
+    if (local && local._sync === 0) return;
+    await localDB.profiles.put({ id: r.id, timezone: r.timezone, _sync: 1 });
+  }
+
+  private async applyCategory(r: RemoteCategory): Promise<void> {
+    const local = await localDB.categories.get(r.id);
+    if (local && local._sync === 0) return;
+    await localDB.categories.put({
+      id: r.id,
+      userId: r.user_id,
+      name: r.name,
+      color: r.color,
+      icon: r.icon,
+      archived: r.archived,
+      sortOrder: r.sort_order,
+      _sync: 1,
+    });
+  }
+
+  private async applyGoal(r: RemoteGoal): Promise<void> {
+    const local = await localDB.goals.get(r.id);
+    if (local && local._sync === 0) return;
+    await localDB.goals.put({
+      id: r.id,
+      userId: r.user_id,
+      categoryId: r.category_id,
+      title: r.title,
+      description: r.description,
+      type: r.type,
+      frequency: r.frequency,
+      targetCount: r.target_count,
+      targetMinutes: r.target_minutes,
+      active: r.active,
+      archivedAt: r.archived_at,
+      createdAt: r.created_at,
+      _sync: 1,
+    });
+  }
+
+  private async applyTask(r: RemoteTask): Promise<void> {
+    const local = await localDB.tasks.get(r.id);
+    if (local && local._sync === 0) return;
+    await localDB.tasks.put({
+      id: r.id,
+      userId: r.user_id,
+      goalId: r.goal_id,
+      categoryId: r.category_id,
+      title: r.title,
+      dueDate: r.due_date,
+      status: r.status,
+      estimatedMinutes: r.estimated_minutes,
+      completedAt: r.completed_at,
+      _sync: 1,
+    });
+  }
+
+  /** Logs são imutáveis e idempotentes por (userId, clientEventId): se já existe
+   *  localmente, nunca reescreve (evita duplicar com id de servidor diferente). */
+  private async applyExecutionLog(r: RemoteLog): Promise<void> {
+    const existing = await localDB.executionLogs
+      .where("[userId+clientEventId]")
+      .equals([r.user_id, r.client_event_id])
+      .first();
+    if (existing) return;
+    await localDB.executionLogs.put({
+      id: r.id,
+      userId: r.user_id,
+      goalId: r.goal_id,
+      taskId: r.task_id,
+      occurredOn: r.occurred_on,
+      minutesSpent: r.minutes_spent,
+      source: r.source,
+      clientEventId: r.client_event_id,
+      _sync: 1,
+    });
+  }
+
+  // ---- Realtime (Supabase postgres_changes): sync multi-dispositivo ao vivo ----
+
+  /**
+   * Assina mudanças do servidor para o usuário e as aplica localmente em tempo
+   * real. A RLS garante que só chegam as próprias linhas. Reentrante: troca o
+   * canal anterior. Sem backend, é no-op.
+   */
+  subscribeRealtime(userId: string): void {
+    if (!this.db) return;
+    this.unsubscribeRealtime();
+    const channel = this.db.channel(`sync:${userId}`);
+    const sources: Array<{ table: string; filter: string }> = [
+      { table: "goals", filter: `user_id=eq.${userId}` },
+      { table: "tasks", filter: `user_id=eq.${userId}` },
+      { table: "categories", filter: `user_id=eq.${userId}` },
+      { table: "execution_logs", filter: `user_id=eq.${userId}` },
+      { table: "profiles", filter: `id=eq.${userId}` },
+    ];
+    for (const { table, filter } of sources) {
+      channel.on(
+        "postgres_changes",
+        { event: "*", schema: "public", table, filter },
+        (payload) => void this.handleRealtimeChange(payload as unknown as RealtimeChange),
+      );
     }
+    channel.subscribe();
+    this.channel = channel;
+  }
+
+  unsubscribeRealtime(): void {
+    if (this.channel && this.db) {
+      void this.db.removeChannel(this.channel);
+      this.channel = null;
+    }
+  }
+
+  /** Aplica um evento de realtime ao estado local (mesmo merge do pull). */
+  async handleRealtimeChange(change: RealtimeChange): Promise<void> {
+    const isDelete = change.eventType === "DELETE";
+    switch (change.table) {
+      case "profiles":
+        if (!isDelete) await this.applyProfile(change.new as unknown as RemoteProfile);
+        break;
+      case "categories":
+        if (isDelete) await this.removeLocal(localDB.categories, change.old);
+        else await this.applyCategory(change.new as unknown as RemoteCategory);
+        break;
+      case "goals":
+        if (isDelete) await this.removeLocal(localDB.goals, change.old);
+        else await this.applyGoal(change.new as unknown as RemoteGoal);
+        break;
+      case "tasks":
+        if (isDelete) await this.removeLocal(localDB.tasks, change.old);
+        else await this.applyTask(change.new as unknown as RemoteTask);
+        break;
+      case "execution_logs":
+        // Append-only: só INSERT importa (sem update/delete).
+        if (change.eventType === "INSERT") {
+          await this.applyExecutionLog(change.new as unknown as RemoteLog);
+        }
+        break;
+    }
+    await this.refreshPending();
+  }
+
+  /** Remove um registro local apagado no servidor, preservando edições pendentes. */
+  private async removeLocal<T extends { id: string; _sync: SyncState }>(
+    table: Table<T, string>,
+    old: Record<string, unknown>,
+  ): Promise<void> {
+    const id = typeof old?.id === "string" ? old.id : undefined;
+    if (!id) return;
+    const local = await table.get(id);
+    if (local && local._sync === 0) return;
+    await table.delete(id);
   }
 
   /** Timezone do usuário → profiles (linha já criada pelo trigger handle_new_user). */

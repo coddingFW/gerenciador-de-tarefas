@@ -57,7 +57,10 @@ supabase/     schema SQL + RLS + Edge Functions
 - [x] Dashboard histórico — `HistoryAggregator` (7/30 dias) + gráfico SVG, com estados.
 - [x] Sync de descida (pull) + restore — `SyncEngine.pull` baixa o estado do
       servidor no bootstrap, merge seguro; testes web (`vitest`+`fake-indexeddb`).
-- [ ] Sync em tempo real (subscriptions) — pull hoje é só no bootstrap/login.
+- [x] Sync em tempo real — `SyncEngine.subscribeRealtime` aplica `postgres_changes`
+      do Supabase ao Dexie ao vivo (multi-dispositivo); migration `0009` habilita
+      o Realtime; testes do handler.
+- [x] Lint — ESLint 9 (flat config) + typescript-eslint; `npm run lint` no CI.
 
 ### Derivação server-side (regra inviolável #2)
 Streak e score são **derivados no servidor** a partir dos `execution_logs`

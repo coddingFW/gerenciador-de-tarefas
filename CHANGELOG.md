@@ -62,3 +62,11 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/) e o projeto adot
   cache) antes de enviar os pendentes. Merge seguro (não sobrescreve registros
   locais `_sync = 0`; logs idempotentes por `(userId, clientEventId)`). Testes
   unitários do web com `vitest` + `fake-indexeddb`; job no CI.
+- **Sincronização em tempo real**: `SyncEngine.subscribeRealtime` consome
+  `postgres_changes` do Supabase e aplica as mudanças ao Dexie ao vivo
+  (multi-dispositivo), com o mesmo merge do pull; migration `0009` habilita o
+  Realtime nas tabelas do usuário (RLS continua restringindo ao dono). Testes do
+  handler de realtime.
+- **Lint**: configuração ESLint 9 (flat config) + `typescript-eslint`
+  (`eslint.config.js`), `no-console` e `no-unused-vars` ajustados; `npm run lint`
+  agora funciona e roda no CI.

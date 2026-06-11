@@ -41,6 +41,8 @@ async function resolveUser(base: { id: string; name: string }): Promise<CurrentU
       browserTimezone: timezone,
     });
     void container.sync.flush();
+    // Sync ao vivo (multi-dispositivo). No-op sem backend.
+    container.sync.subscribeRealtime(base.id);
   } catch {
     // Falha ao persistir não bloqueia o login: segue com o fuso do navegador.
   }
