@@ -1,17 +1,20 @@
 /** Fakes em memória para testar use-cases isoladamente (sem infra real). */
 import type { DomainEvent } from "../src/domain/events/index.js";
 import type {
+  Category,
   ExecutionLog,
   Goal,
   IsoDate,
   Task,
 } from "../src/domain/entities/index.js";
 import type {
+  ICategoryRepository,
   IClock,
   IEventBus,
   IExecutionLogRepository,
   IGoalRepository,
   IIdGenerator,
+  IProfileRepository,
   ITaskRepository,
 } from "../src/application/ports/index.js";
 
@@ -72,6 +75,39 @@ export class FakeTaskRepository implements ITaskRepository {
     return [...this.store.values()].filter(
       (t) => t.userId === userId && t.status === "pending" && t.dueDate === date,
     );
+  }
+}
+
+export class FakeCategoryRepository implements ICategoryRepository {
+  readonly store = new Map<string, Category>();
+  constructor(initial: Category[] = []) {
+    for (const c of initial) this.store.set(c.id, c);
+  }
+  async byId(id: string): Promise<Category | null> {
+    return this.store.get(id) ?? null;
+  }
+  async save(category: Category): Promise<void> {
+    this.store.set(category.id, category);
+  }
+  async listFor(userId: string): Promise<Category[]> {
+    return [...this.store.values()]
+      .filter((c) => c.userId === userId)
+      .sort((a, b) => a.sortOrder - b.sortOrder);
+  }
+}
+
+export class FakeProfileRepository implements IProfileRepository {
+  readonly timezones = new Map<string, string>();
+  writes = 0;
+  constructor(initial: Record<string, string> = {}) {
+    for (const [id, tz] of Object.entries(initial)) this.timezones.set(id, tz);
+  }
+  async getTimezone(userId: string): Promise<string | null> {
+    return this.timezones.get(userId) ?? null;
+  }
+  async setTimezone(userId: string, timezone: string): Promise<void> {
+    this.writes++;
+    this.timezones.set(userId, timezone);
   }
 }
 

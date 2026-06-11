@@ -42,3 +42,18 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/) e o projeto adot
 - `supabase/functions/admin-api`: Edge Function (Deno) do painel admin —
   autoriza por JWT + `role = 'admin'`, expõe as views administrativas e o
   gerenciamento de feature flags com auditoria; teste pgTAP do modelo de acesso.
+- **Timezone do usuário**: captura silenciosa do fuso do navegador no
+  login/primeiro carregamento, persistido no perfil (use-case `SyncUserTimezone`
+  + `IProfileRepository`), eliminando a divergência servidor (UTC) × cliente nos
+  cálculos de streak/score.
+- **Categorias de hábitos**: `ICategoryRepository` + use-cases
+  `CreateCategory`/`EditCategory`/`ReorderCategories`, store Dexie + push de
+  sync, e UI completa (cor/ícone/nome, reordenar, arquivar) com agrupamento dos
+  hábitos por categoria na tela Hoje.
+- **Tarefas avulsas**: use-cases `CreateTask`/`ReopenTask` (desfazer reverte o
+  status; o log imutável permanece) e tela dedicada (pendentes/concluídas),
+  separada dos hábitos recorrentes.
+- **Dashboard histórico**: serviço de domínio `HistoryAggregator` (séries 7/30
+  dias a partir dos `execution_logs` locais) + gráfico de barras SVG, com estados
+  loading/empty/erro/dados insuficientes.
+- `apps/web`: testes E2E de categorias, tarefas e histórico do dashboard.

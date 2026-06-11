@@ -3,7 +3,7 @@
  * Adapters (SupabaseRepository, IndexedDbRepository, etc.). Regra de dependência
  * da Clean Architecture: o domínio depende destas abstrações, nunca do concreto.
  */
-import type { ExecutionLog, Goal, IsoDate, Task } from "../../domain/entities/index.js";
+import type { Category, ExecutionLog, Goal, IsoDate, Task } from "../../domain/entities/index.js";
 import type { DomainEvent } from "../../domain/events/index.js";
 
 export interface IClock {
@@ -31,6 +31,19 @@ export interface IExecutionLogRepository {
   /** Idempotente por (userId, clientEventId). Reenvio não duplica. */
   append(log: ExecutionLog): Promise<void>;
   forGoal(goalId: string): Promise<ExecutionLog[]>;
+}
+
+export interface ICategoryRepository {
+  byId(id: string): Promise<Category | null>;
+  save(category: Category): Promise<void>;
+  /** Categorias do usuário, ordenadas por `sortOrder`. */
+  listFor(userId: string): Promise<Category[]>;
+}
+
+export interface IProfileRepository {
+  /** Fuso persistido do usuário, ou `null` se ainda desconhecido. */
+  getTimezone(userId: string): Promise<string | null>;
+  setTimezone(userId: string, timezone: string): Promise<void>;
 }
 
 export interface IEventBus {

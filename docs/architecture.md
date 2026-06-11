@@ -49,6 +49,12 @@ supabase/     schema SQL + RLS + Edge Functions
 - [x] E2E (Playwright) — ciclo de vida do hábito em modo demo, job `e2e` no CI.
 - [x] Edge Functions completas — `recompute-metrics`, `event-dispatcher` e
       `admin-api` (painel admin: métricas + feature flags com auditoria).
+- [x] Timezone do usuário — captura silenciosa + persistência no perfil
+      (`SyncUserTimezone`/`IProfileRepository`); alinha o cálculo cliente×servidor.
+- [x] Categorias — `ICategoryRepository` + use-cases + UI (cor/ícone/reordenar)
+      e agrupamento de hábitos por categoria.
+- [x] Tarefas avulsas — `CreateTask`/`ReopenTask` + tela própria (pendentes/concluídas).
+- [x] Dashboard histórico — `HistoryAggregator` (7/30 dias) + gráfico SVG, com estados.
 
 ### Derivação server-side (regra inviolável #2)
 Streak e score são **derivados no servidor** a partir dos `execution_logs`

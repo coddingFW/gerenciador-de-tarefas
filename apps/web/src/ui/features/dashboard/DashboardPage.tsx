@@ -1,10 +1,17 @@
+import { useState } from "preact/hooks";
 import { useLiveQuery } from "dexie-react-hooks";
-import { ProductivityScore, StreakCalculator, type ExecutionLog } from "@habit/core";
+import {
+  HistoryAggregator,
+  ProductivityScore,
+  StreakCalculator,
+  type ExecutionLog,
+} from "@habit/core";
 import { localDB } from "../../../infrastructure/persistence/db";
 import { container } from "../../../lib/container";
 import type { CurrentUser } from "../../../lib/auth";
+import { HistoryChart } from "./HistoryChart";
 
-/** US-05/US-06: dashboard pessoal v0 — streaks, tempo e score (derivados dos logs). */
+/** US-05/US-06: dashboard pessoal — hoje + histórico (derivados dos logs locais). */
 export function DashboardPage({ user }: { user: CurrentUser }) {
   const today = container.clock.today(user.timezone);
 
@@ -14,11 +21,11 @@ export function DashboardPage({ user }: { user: CurrentUser }) {
       [user.id],
     ) ?? [];
 
-  const logs =
-    useLiveQuery(
-      () => localDB.executionLogs.where("userId").equals(user.id).toArray(),
-      [user.id],
-    ) ?? [];
+  const logsRaw = useLiveQuery(
+    () => localDB.executionLogs.where("userId").equals(user.id).toArray(),
+    [user.id],
+  );
+  const logs = logsRaw ?? [];
 
   const logsByGoal = new Map<string, ExecutionLog[]>();
   for (const l of logs) {
@@ -58,6 +65,8 @@ export function DashboardPage({ user }: { user: CurrentUser }) {
         <Stat label="Tempo total" value={`${totalMinutes} min`} />
       </div>
 
+      <HistorySection logs={logsRaw} today={today} />
+
       <section>
         <h2 class="mb-2 text-sm font-semibold text-slate-700">Por hábito</h2>
         {perGoal.length === 0 ? (
@@ -87,6 +96,106 @@ export function DashboardPage({ user }: { user: CurrentUser }) {
         )}
       </section>
     </div>
+  );
+}
+
+function HistorySection({ logs, today }: { logs: ExecutionLog[] | undefined; today: string }) {
+  const [period, setPeriod] = useState<7 | 30>(7);
+  const [metric, setMetric] = useState<"executions" | "minutes">("executions");
+
+  return (
+    <section>
+      <div class="mb-2 flex items-center justify-between gap-2">
+        <h2 class="text-sm font-semibold text-slate-700">Histórico</h2>
+        <div class="flex items-center gap-1">
+          <Toggle active={metric === "executions"} onClick={() => setMetric("executions")}>
+            Execuções
+          </Toggle>
+          <Toggle active={metric === "minutes"} onClick={() => setMetric("minutes")}>
+            Minutos
+          </Toggle>
+          <span class="mx-1 h-4 w-px bg-slate-200" />
+          <Toggle active={period === 7} onClick={() => setPeriod(7)}>
+            7d
+          </Toggle>
+          <Toggle active={period === 30} onClick={() => setPeriod(30)}>
+            30d
+          </Toggle>
+        </div>
+      </div>
+      <div class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+        <HistoryBody logs={logs} today={today} period={period} metric={metric} />
+      </div>
+    </section>
+  );
+}
+
+function HistoryBody({
+  logs,
+  today,
+  period,
+  metric,
+}: {
+  logs: ExecutionLog[] | undefined;
+  today: string;
+  period: 7 | 30;
+  metric: "executions" | "minutes";
+}) {
+  if (logs === undefined) {
+    return <div class="h-32 w-full animate-pulse rounded-lg bg-slate-100" />;
+  }
+  if (logs.length === 0) {
+    return (
+      <p class="py-8 text-center text-sm text-slate-500">
+        Sem dados ainda. Registre execuções na aba Hoje.
+      </p>
+    );
+  }
+
+  try {
+    const series = HistoryAggregator.daily(logs, period, today);
+    const activeDays = series.filter((p) => p.executions > 0).length;
+    const totalExec = series.reduce((s, p) => s + p.executions, 0);
+    const totalMin = series.reduce((s, p) => s + p.minutes, 0);
+
+    return (
+      <div class="flex flex-col gap-2">
+        <HistoryChart data={series} metric={metric} />
+        <div class="flex items-center justify-between text-xs text-slate-500">
+          <span>
+            {totalExec} execuç{totalExec === 1 ? "ão" : "ões"} · {totalMin} min
+          </span>
+          {activeDays < 2 && <span class="text-amber-600">Dados insuficientes para tendência</span>}
+        </div>
+      </div>
+    );
+  } catch {
+    return (
+      <p class="py-8 text-center text-sm text-red-600">
+        Não foi possível carregar o histórico. Tente novamente.
+      </p>
+    );
+  }
+}
+
+function Toggle({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: preact.ComponentChildren;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      class={`rounded-md px-2 py-1 text-xs font-medium ${
+        active ? "bg-brand text-white" : "text-slate-500 hover:bg-slate-100"
+      }`}
+    >
+      {children}
+    </button>
   );
 }
 

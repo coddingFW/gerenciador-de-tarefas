@@ -55,4 +55,24 @@ describe("StreakCalculator.computeDaily", () => {
     const logs = ["2026-05-31", "2026-06-01"].map(log);
     expect(StreakCalculator.computeDaily(logs, "2026-06-01").best).toBe(2);
   });
+
+  // Virada de dia (QA de timezone): o `today` correto vem do IClock no fuso do
+  // usuário; aqui validamos a semântica de fronteira que ele alimenta.
+  it("às 23:59 (hoje = dia da execução) a streak conta o dia atual", () => {
+    const logs = ["2026-06-09", "2026-06-10"].map(log);
+    // 23:59 de 10/06 → today = 2026-06-10
+    expect(StreakCalculator.computeDaily(logs, "2026-06-10").current).toBe(2);
+  });
+
+  it("às 00:01 do dia seguinte (última execução = ontem) a streak se mantém", () => {
+    const logs = ["2026-06-09", "2026-06-10"].map(log);
+    // 00:01 de 11/06 → today = 2026-06-11, última = ontem
+    expect(StreakCalculator.computeDaily(logs, "2026-06-11").current).toBe(2);
+  });
+
+  it("após pular um dia inteiro, a virada quebra a streak atual", () => {
+    const logs = ["2026-06-09", "2026-06-10"].map(log);
+    // 00:01 de 12/06 → today = 2026-06-12, última = anteontem
+    expect(StreakCalculator.computeDaily(logs, "2026-06-12").current).toBe(0);
+  });
 });

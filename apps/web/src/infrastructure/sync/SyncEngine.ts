@@ -58,6 +58,8 @@ export class SyncEngine {
     this.running = true;
     this.patch({ syncing: true });
     try {
+      await this.pushProfiles();
+      await this.pushCategories();
       await this.pushGoals();
       await this.pushExecutionLogs();
       await this.pushTasks();
@@ -68,6 +70,35 @@ export class SyncEngine {
       this.running = false;
       this.patch({ syncing: false });
       await this.refreshPending();
+    }
+  }
+
+  /** Timezone do usuário → profiles (linha já criada pelo trigger handle_new_user). */
+  private async pushProfiles(): Promise<void> {
+    if (!this.db) return;
+    const rows = await localDB.profiles.where("_sync").equals(0).toArray();
+    for (const p of rows) {
+      const { error } = await this.db.from("profiles").update({ timezone: p.timezone }).eq("id", p.id);
+      if (error) throw error;
+      await localDB.profiles.update(p.id, { _sync: 1 });
+    }
+  }
+
+  private async pushCategories(): Promise<void> {
+    if (!this.db) return;
+    const rows = await localDB.categories.where("_sync").equals(0).toArray();
+    for (const c of rows) {
+      const { error } = await this.db.from("categories").upsert({
+        id: c.id,
+        user_id: c.userId,
+        name: c.name,
+        color: c.color,
+        icon: c.icon,
+        archived: c.archived,
+        sort_order: c.sortOrder,
+      });
+      if (error) throw error;
+      await localDB.categories.update(c.id, { _sync: 1 });
     }
   }
 
@@ -135,12 +166,14 @@ export class SyncEngine {
   }
 
   private async refreshPending(): Promise<void> {
-    const [g, l, t] = await Promise.all([
+    const [g, l, t, c, p] = await Promise.all([
       localDB.goals.where("_sync").equals(0).count(),
       localDB.executionLogs.where("_sync").equals(0).count(),
       localDB.tasks.where("_sync").equals(0).count(),
+      localDB.categories.where("_sync").equals(0).count(),
+      localDB.profiles.where("_sync").equals(0).count(),
     ]);
-    this.patch({ pending: g + l + t });
+    this.patch({ pending: g + l + t + c + p });
   }
 
   private patch(partial: Partial<SyncStatus>): void {

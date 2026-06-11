@@ -1,5 +1,5 @@
 import { useState } from "preact/hooks";
-import type { Goal, GoalFrequency } from "@habit/core";
+import type { Category, Goal, GoalFrequency } from "@habit/core";
 import { container } from "../../../lib/container";
 import type { CurrentUser } from "../../../lib/auth";
 
@@ -14,17 +14,19 @@ export function GoalRow({
   goal,
   done,
   user,
+  categories,
   onComplete,
 }: {
   goal: Goal;
   done: boolean;
   user: CurrentUser;
+  categories: Category[];
   onComplete: () => void;
 }) {
   const [editing, setEditing] = useState(false);
 
   if (editing) {
-    return <GoalEditor goal={goal} user={user} onClose={() => setEditing(false)} />;
+    return <GoalEditor goal={goal} user={user} categories={categories} onClose={() => setEditing(false)} />;
   }
 
   const archive = async () => {
@@ -74,19 +76,22 @@ export function GoalRow({
   );
 }
 
-/** Editor inline: título, frequência e meta de minutos. */
+/** Editor inline: título, frequência, meta de minutos e categoria. */
 function GoalEditor({
   goal,
   user,
+  categories,
   onClose,
 }: {
   goal: Goal;
   user: CurrentUser;
+  categories: Category[];
   onClose: () => void;
 }) {
   const [title, setTitle] = useState(goal.title);
   const [frequency, setFrequency] = useState<GoalFrequency>(goal.frequency);
   const [minutes, setMinutes] = useState(goal.targetMinutes?.toString() ?? "");
+  const [categoryId, setCategoryId] = useState(goal.categoryId ?? "");
   const [error, setError] = useState<string | null>(null);
 
   const save = async (e: Event) => {
@@ -99,6 +104,7 @@ function GoalEditor({
         title,
         frequency,
         targetMinutes: minutes ? Number(minutes) : null,
+        categoryId: categoryId || null,
       });
       void container.sync.flush();
       onClose();
@@ -132,6 +138,22 @@ function GoalEditor({
           placeholder="min"
           class="w-20 rounded-lg border border-slate-300 px-3 py-2 text-sm"
         />
+        {categories.length > 0 && (
+          <select
+            value={categoryId}
+            onChange={(e) => setCategoryId((e.target as HTMLSelectElement).value)}
+            aria-label="Categoria"
+            class="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+          >
+            <option value="">Sem categoria</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.icon ? `${c.icon} ` : ""}
+                {c.name}
+              </option>
+            ))}
+          </select>
+        )}
         <div class="flex gap-1">
           <button
             type="submit"

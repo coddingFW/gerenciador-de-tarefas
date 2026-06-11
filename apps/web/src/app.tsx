@@ -2,9 +2,11 @@ import { useState } from "preact/hooks";
 import { useAuth } from "./lib/auth";
 import { SyncBadge } from "./ui/components/SyncBadge";
 import { TodayPage } from "./ui/features/today/TodayPage";
+import { TasksPage } from "./ui/features/tasks/TasksPage";
+import { CategoriesPage } from "./ui/features/categories/CategoriesPage";
 import { DashboardPage } from "./ui/features/dashboard/DashboardPage";
 
-type Tab = "today" | "dashboard";
+type Tab = "today" | "tasks" | "categories" | "dashboard";
 
 export function App() {
   const { user, loading, backend, signInWithGoogle, signOut } = useAuth();
@@ -48,9 +50,15 @@ export function App() {
         </div>
       </header>
 
-      <nav class="flex gap-1 px-4 pt-3">
+      <nav class="flex gap-1 overflow-x-auto px-4 pt-3">
         <TabButton active={tab === "today"} onClick={() => setTab("today")}>
           Hoje
+        </TabButton>
+        <TabButton active={tab === "tasks"} onClick={() => setTab("tasks")}>
+          Tarefas
+        </TabButton>
+        <TabButton active={tab === "categories"} onClick={() => setTab("categories")}>
+          Categorias
         </TabButton>
         <TabButton active={tab === "dashboard"} onClick={() => setTab("dashboard")}>
           Painel
@@ -58,7 +66,10 @@ export function App() {
       </nav>
 
       <main class="flex-1 p-4">
-        {tab === "today" ? <TodayPage user={user} /> : <DashboardPage user={user} />}
+        {tab === "today" && <TodayPage user={user} />}
+        {tab === "tasks" && <TasksPage user={user} />}
+        {tab === "categories" && <CategoriesPage user={user} />}
+        {tab === "dashboard" && <DashboardPage user={user} />}
       </main>
     </div>
   );
@@ -76,7 +87,7 @@ function TabButton({
   return (
     <button
       onClick={onClick}
-      class={`rounded-lg px-4 py-1.5 text-sm font-medium ${
+      class={`shrink-0 whitespace-nowrap rounded-lg px-4 py-1.5 text-sm font-medium ${
         active ? "bg-brand text-white" : "text-slate-600 hover:bg-slate-100"
       }`}
     >

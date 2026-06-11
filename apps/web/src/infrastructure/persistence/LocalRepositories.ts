@@ -1,13 +1,22 @@
 import type {
+  Category,
   ExecutionLog,
   Goal,
+  ICategoryRepository,
   IExecutionLogRepository,
   IGoalRepository,
+  IProfileRepository,
   ITaskRepository,
   IsoDate,
   Task,
 } from "@habit/core";
-import { localDB, type StoredExecutionLog, type StoredGoal, type StoredTask } from "./db";
+import {
+  localDB,
+  type StoredCategory,
+  type StoredExecutionLog,
+  type StoredGoal,
+  type StoredTask,
+} from "./db";
 
 /**
  * Adapters local-first: o IndexedDB é a fonte da verdade do cliente (renderização
@@ -17,6 +26,7 @@ import { localDB, type StoredExecutionLog, type StoredGoal, type StoredTask } fr
 
 const stripGoal = ({ _sync, ...g }: StoredGoal): Goal => g;
 const stripTask = ({ _sync, ...t }: StoredTask): Task => t;
+const stripCategory = ({ _sync, ...c }: StoredCategory): Category => c;
 
 export class LocalGoalRepository implements IGoalRepository {
   async byId(id: string): Promise<Goal | null> {
@@ -43,6 +53,30 @@ export class LocalTaskRepository implements ITaskRepository {
       .filter((t) => t.status === "pending" && t.dueDate === date)
       .toArray();
     return rows.map(stripTask);
+  }
+}
+
+export class LocalCategoryRepository implements ICategoryRepository {
+  async byId(id: string): Promise<Category | null> {
+    const row = await localDB.categories.get(id);
+    return row ? stripCategory(row) : null;
+  }
+  async save(category: Category): Promise<void> {
+    await localDB.categories.put({ ...category, _sync: 0 });
+  }
+  async listFor(userId: string): Promise<Category[]> {
+    const rows = await localDB.categories.where("userId").equals(userId).sortBy("sortOrder");
+    return rows.map(stripCategory);
+  }
+}
+
+export class LocalProfileRepository implements IProfileRepository {
+  async getTimezone(userId: string): Promise<string | null> {
+    const row = await localDB.profiles.get(userId);
+    return row?.timezone ?? null;
+  }
+  async setTimezone(userId: string, timezone: string): Promise<void> {
+    await localDB.profiles.put({ id: userId, timezone, _sync: 0 });
   }
 }
 

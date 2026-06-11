@@ -1,13 +1,14 @@
 import { useState } from "preact/hooks";
-import type { GoalFrequency } from "@habit/core";
+import type { Category, GoalFrequency } from "@habit/core";
 import { container } from "../../../lib/container";
 import type { CurrentUser } from "../../../lib/auth";
 
 /** US-02: criar um hábito. Validação leve no cliente; o domínio valida de novo. */
-export function AddGoalForm({ user }: { user: CurrentUser }) {
+export function AddGoalForm({ user, categories }: { user: CurrentUser; categories: Category[] }) {
   const [title, setTitle] = useState("");
   const [frequency, setFrequency] = useState<GoalFrequency>("daily");
   const [minutes, setMinutes] = useState("");
+  const [categoryId, setCategoryId] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const submit = async (e: Event) => {
@@ -20,9 +21,11 @@ export function AddGoalForm({ user }: { user: CurrentUser }) {
         frequency,
         targetCount: 1,
         targetMinutes: minutes ? Number(minutes) : null,
+        categoryId: categoryId || null,
       });
       setTitle("");
       setMinutes("");
+      setCategoryId("");
       void container.sync.flush();
     } catch {
       setError("Informe um título válido para o hábito.");
@@ -63,6 +66,22 @@ export function AddGoalForm({ user }: { user: CurrentUser }) {
           Adicionar
         </button>
       </div>
+      {categories.length > 0 && (
+        <select
+          value={categoryId}
+          onChange={(e) => setCategoryId((e.target as HTMLSelectElement).value)}
+          aria-label="Categoria"
+          class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm sm:w-auto"
+        >
+          <option value="">Sem categoria</option>
+          {categories.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.icon ? `${c.icon} ` : ""}
+              {c.name}
+            </option>
+          ))}
+        </select>
+      )}
       {error && <p class="mt-2 text-xs text-red-600">{error}</p>}
     </form>
   );

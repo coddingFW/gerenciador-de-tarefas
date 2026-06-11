@@ -1,5 +1,6 @@
 import { useEffect, useState } from "preact/hooks";
 import { isBackendConfigured, supabase } from "../infrastructure/supabase/client";
+import { container } from "./container";
 
 export interface CurrentUser {
   id: string;
@@ -17,14 +18,33 @@ function browserTimezone(): string {
   }
 }
 
-/** Usuário de demonstração (modo local-first sem backend), estável entre sessões. */
-function demoUser(): CurrentUser {
+/** Identidade do usuário de demonstração (modo local-first), estável entre sessões. */
+function demoIdentity(): { id: string; name: string } {
   let id = localStorage.getItem(DEMO_KEY);
   if (!id) {
     id = crypto.randomUUID();
     localStorage.setItem(DEMO_KEY, id);
   }
-  return { id, name: "Você (demo)", timezone: browserTimezone() };
+  return { id, name: "Você (demo)" };
+}
+
+/**
+ * Captura SILENCIOSA do fuso: persiste o timezone do navegador no perfil (uma vez
+ * por mudança) e devolve o `CurrentUser` com o fuso efetivo — fonte da verdade
+ * dos cálculos de data (streak/score), inclusive no servidor. Idempotente.
+ */
+async function resolveUser(base: { id: string; name: string }): Promise<CurrentUser> {
+  let timezone = browserTimezone();
+  try {
+    timezone = await container.syncUserTimezone.execute({
+      userId: base.id,
+      browserTimezone: timezone,
+    });
+    void container.sync.flush();
+  } catch {
+    // Falha ao persistir não bloqueia o login: segue com o fuso do navegador.
+  }
+  return { ...base, name: base.name, timezone };
 }
 
 export interface AuthState {
@@ -45,18 +65,19 @@ export function useAuth(): AuthState {
 
   useEffect(() => {
     if (!isBackendConfigured || !supabase) {
-      setUser(demoUser());
-      setLoading(false);
+      void resolveUser(demoIdentity()).then(setUser).finally(() => setLoading(false));
       return;
     }
 
-    void supabase.auth.getSession().then(({ data }) => {
-      setUser(mapUser(data.session?.user));
+    void supabase.auth.getSession().then(async ({ data }) => {
+      const identity = mapIdentity(data.session?.user);
+      setUser(identity ? await resolveUser(identity) : null);
       setLoading(false);
     });
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(mapUser(session?.user));
+    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      const identity = mapIdentity(session?.user);
+      setUser(identity ? await resolveUser(identity) : null);
     });
     return () => sub.subscription.unsubscribe();
   }, []);
@@ -77,9 +98,11 @@ export function useAuth(): AuthState {
   return { user, loading, backend: isBackendConfigured, signInWithGoogle, signOut };
 }
 
-function mapUser(u: { id: string; user_metadata?: Record<string, unknown> } | undefined | null): CurrentUser | null {
+function mapIdentity(
+  u: { id: string; user_metadata?: Record<string, unknown> } | undefined | null,
+): { id: string; name: string } | null {
   if (!u) return null;
   const meta = u.user_metadata ?? {};
   const name = (meta.full_name as string) || (meta.name as string) || "Usuário";
-  return { id: u.id, name, timezone: browserTimezone() };
+  return { id: u.id, name };
 }
