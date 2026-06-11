@@ -19,3 +19,10 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/) e o projeto adot
   local-first com Dexie/IndexedDB, `SyncEngine` idempotente, autenticação
   Google (com modo demo offline), e telas **Hoje** e **Painel** consumindo o
   domínio `@habit/core`.
+- `supabase/`: derivação autoritativa server-side de métricas — funções SQL
+  `recompute_streak` (trigger por log, port fiel de `StreakCalculator`),
+  `productivity_score`/`compute_daily_score` (port de `ProductivityScore`) e
+  `refresh_metrics_views`, com teste pgTAP comparando streak SQL × domínio.
+- `supabase/functions/recompute-metrics`: Edge Function (Deno) que orquestra os
+  jobs de agregação (backfill de streaks, score diário, refresh de views),
+  protegida por `service_role` e pensada para execução agendada.

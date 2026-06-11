@@ -38,8 +38,18 @@ supabase/     schema SQL + RLS + Edge Functions
 - [x] `supabase/` — schema, RLS, outbox, views de métricas, feature flags + teste de isolamento
 - [x] `apps/web` — Preact + Tailwind, adapters local-first (Dexie), SyncEngine,
       auth (Google/demo), telas Hoje e Painel. Build: ~48KB gzip.
+- [x] Métricas server-side — `recompute_streak` (trigger), `compute_daily_score`
+      e `recompute-metrics` (Edge Function), com teste pgTAP streak SQL × domínio.
 - [ ] E2E (Playwright)
-- [ ] Edge Functions (event-dispatcher, recompute-metrics, admin-api)
+- [ ] Edge Functions restantes (event-dispatcher, admin-api)
+
+### Derivação server-side (regra inviolável #2)
+Streak e score são **derivados no servidor** a partir dos `execution_logs`
+(append-only); o cliente nunca os escreve. A streak é recalculada na mesma
+transação de cada log via trigger (`trg_execution_logs_streak`), e o job
+`recompute-metrics` faz a reconciliação periódica + score diário + refresh de
+views. As funções SQL são port fiel de `@habit/core` e o teste pgTAP compara o
+resultado SQL contra os mesmos casos do `StreakCalculator`.
 
 > O app roda offline-first por padrão: sem `VITE_SUPABASE_*` configurado, usa um
 > usuário de demonstração local e o IndexedDB como fonte da verdade. Com as

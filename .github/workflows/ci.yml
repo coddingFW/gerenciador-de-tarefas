@@ -24,3 +24,17 @@ jobs:
         run: npm run test:core
       - name: Build (core + web)
         run: npm run build
+
+  database:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      # Sobe o stack local aplicando TODAS as migrations (valida que aplicam
+      # limpo) e roda os testes pgTAP: isolamento por RLS + streak SQL × domínio.
+      - name: Start Supabase (aplica migrations)
+        run: supabase start
+      - name: Database tests (pgTAP — RLS + métricas)
+        run: supabase test db
