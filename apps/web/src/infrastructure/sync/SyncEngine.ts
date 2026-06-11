@@ -24,7 +24,10 @@ export class SyncEngine {
 
   constructor(private readonly db: SupabaseClient | null) {
     this.status = {
-      online: typeof navigator === "undefined" ? true : navigator.onLine,
+      online:
+        typeof navigator !== "undefined" && typeof navigator.onLine === "boolean"
+          ? navigator.onLine
+          : true,
       pending: 0,
       syncing: false,
       lastSyncAt: null,
@@ -40,8 +43,20 @@ export class SyncEngine {
       });
       window.addEventListener("offline", () => this.patch({ online: false }));
     }
-    void this.refreshPending();
-    if (this.status.online) void this.flush();
+    void this.bootstrap();
+  }
+
+  /**
+   * Carga inicial: BAIXA o estado do servidor (restore após limpar o cache /
+   * primeiro acesso em um novo dispositivo) e então ENVIA o que estiver pendente
+   * localmente. Sem o pull, o cliente nunca recuperava dados — só empurrava.
+   */
+  private async bootstrap(): Promise<void> {
+    await this.refreshPending();
+    if (this.status.online) {
+      await this.pull();
+      await this.flush();
+    }
   }
 
   subscribe(listener: Listener): () => void {
@@ -70,6 +85,135 @@ export class SyncEngine {
       this.running = false;
       this.patch({ syncing: false });
       await this.refreshPending();
+    }
+  }
+
+  /**
+   * Sincronização de DESCIDA. A RLS já restringe cada SELECT ao próprio usuário.
+   * Regra de merge (last-write-wins seguro): nunca sobrescreve um registro local
+   * pendente (`_sync = 0`) — a edição local ainda não enviada vence e será
+   * empurrada no flush; o resto é substituído pelo servidor e marcado `_sync = 1`.
+   */
+  async pull(): Promise<void> {
+    if (!this.db || !this.status.online) return;
+    this.patch({ syncing: true });
+    try {
+      await this.pullProfiles();
+      await this.pullCategories();
+      await this.pullGoals();
+      await this.pullTasks();
+      await this.pullExecutionLogs();
+      this.patch({ lastSyncAt: Date.now() });
+    } catch {
+      // Rede instável: tenta de novo no próximo bootstrap/online.
+    } finally {
+      this.patch({ syncing: false });
+      await this.refreshPending();
+    }
+  }
+
+  private async pullProfiles(): Promise<void> {
+    if (!this.db) return;
+    const { data, error } = await this.db.from("profiles").select("id, timezone");
+    if (error) throw error;
+    for (const r of data ?? []) {
+      if (r.timezone == null) continue;
+      const local = await localDB.profiles.get(r.id);
+      if (local && local._sync === 0) continue;
+      await localDB.profiles.put({ id: r.id, timezone: r.timezone, _sync: 1 });
+    }
+  }
+
+  private async pullCategories(): Promise<void> {
+    if (!this.db) return;
+    const { data, error } = await this.db.from("categories").select("*");
+    if (error) throw error;
+    for (const r of data ?? []) {
+      const local = await localDB.categories.get(r.id);
+      if (local && local._sync === 0) continue;
+      await localDB.categories.put({
+        id: r.id,
+        userId: r.user_id,
+        name: r.name,
+        color: r.color,
+        icon: r.icon,
+        archived: r.archived,
+        sortOrder: r.sort_order,
+        _sync: 1,
+      });
+    }
+  }
+
+  private async pullGoals(): Promise<void> {
+    if (!this.db) return;
+    const { data, error } = await this.db.from("goals").select("*");
+    if (error) throw error;
+    for (const r of data ?? []) {
+      const local = await localDB.goals.get(r.id);
+      if (local && local._sync === 0) continue;
+      await localDB.goals.put({
+        id: r.id,
+        userId: r.user_id,
+        categoryId: r.category_id,
+        title: r.title,
+        description: r.description,
+        type: r.type,
+        frequency: r.frequency,
+        targetCount: r.target_count,
+        targetMinutes: r.target_minutes,
+        active: r.active,
+        archivedAt: r.archived_at,
+        createdAt: r.created_at,
+        _sync: 1,
+      });
+    }
+  }
+
+  private async pullTasks(): Promise<void> {
+    if (!this.db) return;
+    const { data, error } = await this.db.from("tasks").select("*");
+    if (error) throw error;
+    for (const r of data ?? []) {
+      const local = await localDB.tasks.get(r.id);
+      if (local && local._sync === 0) continue;
+      await localDB.tasks.put({
+        id: r.id,
+        userId: r.user_id,
+        goalId: r.goal_id,
+        categoryId: r.category_id,
+        title: r.title,
+        dueDate: r.due_date,
+        status: r.status,
+        estimatedMinutes: r.estimated_minutes,
+        completedAt: r.completed_at,
+        _sync: 1,
+      });
+    }
+  }
+
+  /** Logs são imutáveis e idempotentes por (userId, clientEventId): se já existe
+   *  localmente, nunca reescreve (evita duplicar com id de servidor diferente). */
+  private async pullExecutionLogs(): Promise<void> {
+    if (!this.db) return;
+    const { data, error } = await this.db.from("execution_logs").select("*");
+    if (error) throw error;
+    for (const r of data ?? []) {
+      const existing = await localDB.executionLogs
+        .where("[userId+clientEventId]")
+        .equals([r.user_id, r.client_event_id])
+        .first();
+      if (existing) continue;
+      await localDB.executionLogs.put({
+        id: r.id,
+        userId: r.user_id,
+        goalId: r.goal_id,
+        taskId: r.task_id,
+        occurredOn: r.occurred_on,
+        minutesSpent: r.minutes_spent,
+        source: r.source,
+        clientEventId: r.client_event_id,
+        _sync: 1,
+      });
     }
   }
 

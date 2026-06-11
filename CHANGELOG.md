@@ -57,3 +57,8 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/) e o projeto adot
   dias a partir dos `execution_logs` locais) + gráfico de barras SVG, com estados
   loading/empty/erro/dados insuficientes.
 - `apps/web`: testes E2E de categorias, tarefas e histórico do dashboard.
+- **Sincronização de descida (pull) + restore**: o `SyncEngine` agora baixa o
+  estado do servidor no bootstrap (primeiro acesso/novo dispositivo/limpeza de
+  cache) antes de enviar os pendentes. Merge seguro (não sobrescreve registros
+  locais `_sync = 0`; logs idempotentes por `(userId, clientEventId)`). Testes
+  unitários do web com `vitest` + `fake-indexeddb`; job no CI.

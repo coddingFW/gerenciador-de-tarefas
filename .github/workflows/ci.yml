@@ -22,6 +22,8 @@ jobs:
         run: npm run typecheck
       - name: Unit tests (core, cobertura >= 90%)
         run: npm run test:core
+      - name: Unit tests (web — infra/SyncEngine)
+        run: npm run test --workspace @habit/web
       - name: Build (core + web)
         run: npm run build
 

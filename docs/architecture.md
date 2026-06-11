@@ -55,6 +55,9 @@ supabase/     schema SQL + RLS + Edge Functions
       e agrupamento de hábitos por categoria.
 - [x] Tarefas avulsas — `CreateTask`/`ReopenTask` + tela própria (pendentes/concluídas).
 - [x] Dashboard histórico — `HistoryAggregator` (7/30 dias) + gráfico SVG, com estados.
+- [x] Sync de descida (pull) + restore — `SyncEngine.pull` baixa o estado do
+      servidor no bootstrap, merge seguro; testes web (`vitest`+`fake-indexeddb`).
+- [ ] Sync em tempo real (subscriptions) — pull hoje é só no bootstrap/login.
 
 ### Derivação server-side (regra inviolável #2)
 Streak e score são **derivados no servidor** a partir dos `execution_logs`
