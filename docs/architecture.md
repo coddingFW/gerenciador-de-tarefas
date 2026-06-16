@@ -78,9 +78,11 @@ resultado SQL contra os mesmos casos do `StreakCalculator`.
 > variáveis preenchidas, ativa Google OAuth e o SyncEngine drena a fila para o
 > Supabase. Fluxo validado no navegador (criar hábito → concluir → painel).
 
-> ⚠️ As migrations ainda não foram aplicadas contra um Postgres local (Supabase
-> CLI ausente neste ambiente). Aplicar com `supabase start && supabase db reset`
-> e validar a RLS com `supabase test db`.
+> ✅ As migrations `0001`→`0011` foram aplicadas com sucesso contra um projeto
+> Supabase real via `supabase db push` (2026-06-16), incluindo a `0011`
+> (pg_cron/pg_net) — confirmando que o schema aplica limpo. Validação local de
+> RLS/streak com `supabase test db` (pgTAP) ainda pendente (depende de Docker,
+> indisponível no ambiente de dev).
 
 ## Nota sobre o gerenciador de pacotes
 O design previa `pnpm`; o ambiente local não permitiu ativar o corepack, então

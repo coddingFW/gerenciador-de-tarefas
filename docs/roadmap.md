@@ -26,7 +26,7 @@ Essa fase tem o maior retorno: destrava todo o trabalho já feito.
 | # | Tarefa | Esforço | Estado |
 |---|--------|---------|--------|
 | 1.1 | Commitar `supabase/migrations/0010_grants.sql` (hoje uncommitted) | 🟢 | ✅ |
-| 1.2 | Aplicar todas as migrations a um Postgres real (`supabase db push`) e validar RLS/pgTAP — *requer Supabase CLI/credenciais; passo do operador, ver [deployment.md](deployment.md)* | 🟡 | 🚧 |
+| 1.2 | Aplicar todas as migrations a um Postgres real (`supabase db push`) e validar RLS/pgTAP — **migrations `0001`→`0011` aplicadas limpas num projeto Supabase real em 2026-06-16 (inclui `0011` pg_cron/pg_net)**; pgTAP local (`supabase test db`) ainda pendente (depende de Docker) | 🟡 | 🚧 |
 | 1.3 | Agendar as Edge Functions via `pg_cron`: `recompute-metrics` (diária) e `event-dispatcher` (5 min) — migration `0011_cron_jobs.sql` + Vault ([ADR-0001](adr/ADR-0001-pg-cron-scheduling.md)) | 🟡 | ✅ |
 | 1.4 | Config de deploy do web (Vercel — [`vercel.json`](../vercel.json)) + deploy das Edge Functions (ver [deployment.md](deployment.md)) | 🟡 | ✅ |
 | 1.5 | Inicializar Sentry no boot do app — `initSentry()` lazy/no-op ([ADR-0002](adr/ADR-0002-sentry-observability.md)) | 🟢 | ✅ |
