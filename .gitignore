@@ -6,6 +6,7 @@ dev-dist/
 *.local
 coverage/
 .supabase/
+supabase/.temp/
 playwright-report/
 test-results/
 .DS_Store
