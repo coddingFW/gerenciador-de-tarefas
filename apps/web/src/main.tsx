@@ -1,7 +1,11 @@
 import { render } from "preact";
 import { App } from "./app";
 import { container } from "./lib/container";
+import { initSentry } from "./infrastructure/observability/sentry";
 import "./index.css";
+
+// Observabilidade: no-op quando VITE_SENTRY_DSN não está configurado.
+void initSentry();
 
 // Inicia o motor de sincronização (drena a fila offline quando há rede).
 container.sync.start();

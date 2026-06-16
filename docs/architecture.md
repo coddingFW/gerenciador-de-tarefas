@@ -61,6 +61,9 @@ supabase/     schema SQL + RLS + Edge Functions
       do Supabase ao Dexie ao vivo (multi-dispositivo); migration `0009` habilita
       o Realtime; testes do handler.
 - [x] Lint — ESLint 9 (flat config) + typescript-eslint; `npm run lint` no CI.
+- [x] **Produção (Fase 1)** — agendamento `pg_cron`/`pg_net` (migration `0011`,
+      service_role no Vault), Sentry lazy/no-op no frontend, `vercel.json` e guia
+      de deploy ([deployment.md](deployment.md)). ADR-0001/0002.
 
 ### Derivação server-side (regra inviolável #2)
 Streak e score são **derivados no servidor** a partir dos `execution_logs`

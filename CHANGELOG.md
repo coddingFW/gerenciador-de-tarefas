@@ -7,6 +7,17 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/) e o projeto adot
 ## [Unreleased]
 
 ### Added
+- **Fase 1 (Produção)**: agendamento server-side via `pg_cron` + `pg_net`
+  (migration `0011_cron_jobs.sql`) — `recompute-metrics` (diária) e
+  `event-dispatcher` (a cada 5 min), com a `service_role` lida do Supabase Vault
+  (nunca em texto plano); função `_invoke_edge_function` `SECURITY DEFINER`
+  revogada de `anon`/`authenticated`.
+- **Observabilidade**: Sentry no frontend via `initSentry()` — no-op sem
+  `VITE_SENTRY_DSN` e eliminado por tree-shaking nos builds sem DSN; chunk lazy
+  quando configurado.
+- **Deploy**: `vercel.json` (monorepo + SPA rewrite) e guia [`docs/deployment.md`](docs/deployment.md).
+- **ADRs**: `docs/adr/ADR-0001` (pg_cron/Vault) e `ADR-0002` (Sentry lazy).
+- **Roadmap**: `docs/roadmap.md` com as 5 fases priorizadas.
 - Scaffold do monorepo (npm workspaces).
 - `@habit/core`: domínio puro — entidades, `StreakCalculator`, `ProductivityScore`,
   ports e use-cases `CreateGoal`/`CompleteTask`, com testes unitários.

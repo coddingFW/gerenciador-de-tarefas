@@ -36,7 +36,11 @@ npm run dev                 # sobe o app (quando apps/web existir)
 - `npm run build` — build de produção
 
 ## Status
-🚧 MVP em construção. Veja [CHANGELOG.md](CHANGELOG.md).
+✅ Núcleo completo (hábitos, tarefas, categorias, painel, sync, métricas
+server-side, PWA, E2E). 🚧 Fase 1 (Produção) em andamento — agendamento,
+observabilidade e deploy prontos; aplicação/deploy no ambiente do operador
+(ver [docs/deployment.md](docs/deployment.md)). Roadmap em
+[docs/roadmap.md](docs/roadmap.md); histórico em [CHANGELOG.md](CHANGELOG.md).
 
 ## Licença
 [MIT](LICENSE)
