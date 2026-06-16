@@ -13,9 +13,15 @@ Documento vivo. Lista as tarefas priorizadas para levar o projeto do estado atua
 
 ---
 
-## Fase 1 — Fechar o loop de produção 🔴
+## Fase 1 — Fechar o loop de produção 🔴 — ✅ CÓDIGO-COMPLETO
 *Objetivo: colocar no ar, de forma confiável, tudo o que já existe.*
 Essa fase tem o maior retorno: destrava todo o trabalho já feito.
+
+> **Status:** todos os artefatos de código/config/docs estão prontos e commitados.
+> O que resta é **execução de operador** (exige Supabase CLI/Docker + credenciais,
+> indisponíveis no ambiente de dev): `supabase db push`, `supabase test db`,
+> popular o Vault, `supabase functions deploy` e o deploy na Vercel. Passo a passo
+> em [deployment.md](deployment.md).
 
 | # | Tarefa | Esforço | Estado |
 |---|--------|---------|--------|
