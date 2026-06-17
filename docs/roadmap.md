@@ -13,15 +13,20 @@ Documento vivo. Lista as tarefas priorizadas para levar o projeto do estado atua
 
 ---
 
-## Fase 1 — Fechar o loop de produção 🔴 — ✅ CÓDIGO-COMPLETO
+## Fase 1 — Fechar o loop de produção 🔴 — ✅ NO AR (2026-06-16)
+
+> **App em produção:** https://gerenciador-de-tarefas-web.vercel.app — Supabase
+> real (migrations 0001→0011 aplicadas), 3 Edge Functions deployadas, cron
+> testado (cron→função = 200), login Google funcionando ponta a ponta.
+> Pendências: rotacionar a service_role (exposta num print no setup) antes de uso
+> público; OAuth ainda em modo "Testing"; pgTAP local não rodado (Docker).
+
 *Objetivo: colocar no ar, de forma confiável, tudo o que já existe.*
 Essa fase tem o maior retorno: destrava todo o trabalho já feito.
 
-> **Status:** todos os artefatos de código/config/docs estão prontos e commitados.
-> O que resta é **execução de operador** (exige Supabase CLI/Docker + credenciais,
-> indisponíveis no ambiente de dev): `supabase db push`, `supabase test db`,
-> popular o Vault, `supabase functions deploy` e o deploy na Vercel. Passo a passo
-> em [deployment.md](deployment.md).
+> **Histórico:** os artefatos de código/config foram concluídos primeiro; em
+> 2026-06-16 todos os passos de operador foram executados (db push, Vault,
+> functions deploy, Vercel, Google OAuth). Passo a passo em [deployment.md](deployment.md).
 
 | # | Tarefa | Esforço | Estado |
 |---|--------|---------|--------|
