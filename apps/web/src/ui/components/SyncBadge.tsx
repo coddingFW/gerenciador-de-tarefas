@@ -15,10 +15,10 @@ export function SyncBadge() {
           : "Sincronizado";
 
   const color = !online
-    ? "bg-amber-100 text-amber-800"
+    ? "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200"
     : backend && (pending > 0 || syncing)
-      ? "bg-sky-100 text-sky-800"
-      : "bg-emerald-100 text-emerald-800";
+      ? "bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-200"
+      : "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200";
 
   return (
     <span class={`rounded-full px-2.5 py-1 text-xs font-medium ${color}`}>

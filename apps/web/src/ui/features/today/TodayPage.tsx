@@ -59,21 +59,21 @@ export function TodayPage({ user }: { user: CurrentUser }) {
 
       <section>
         <div class="mb-2 flex items-baseline justify-between">
-          <h2 class="text-sm font-semibold text-slate-700">Hoje</h2>
-          <span class="text-xs text-slate-500">
+          <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Hoje</h2>
+          <span class="text-xs text-slate-500 dark:text-slate-400">
             {doneGoalIds.size}/{goals.length} concluídos
           </span>
         </div>
 
         {goals.length === 0 ? (
-          <p class="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500">
+          <p class="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
             Nenhum hábito ainda. Crie o primeiro acima 👆
           </p>
         ) : (
           <div class="flex flex-col gap-4">
             {groups.map(({ category, items }) => (
               <div key={category?.id ?? "none"}>
-                <h3 class="mb-1.5 px-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <h3 class="mb-1.5 px-1 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
                   {category ? (
                     <CategoryBadge category={category} />
                   ) : (

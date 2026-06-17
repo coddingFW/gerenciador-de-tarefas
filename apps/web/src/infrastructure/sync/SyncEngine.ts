@@ -1,6 +1,6 @@
 import type { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
 import type { Table } from "dexie";
-import type { ExecutionSource, GoalFrequency, TaskStatus, Weekday } from "@habit/core";
+import type { ExecutionSource, GoalFrequency, TaskStatus, Theme, Weekday } from "@habit/core";
 import { localDB, type SyncState } from "../persistence/db";
 
 export interface SyncStatus {
@@ -18,6 +18,9 @@ type Listener = (status: SyncStatus) => void;
 interface RemoteProfile {
   id: string;
   timezone: string | null;
+  theme: Theme | null;
+  display_name: string | null;
+  avatar_url: string | null;
 }
 interface RemoteCategory {
   id: string;
@@ -188,7 +191,9 @@ export class SyncEngine {
 
   private async pullProfiles(): Promise<void> {
     if (!this.db) return;
-    const { data, error } = await this.db.from("profiles").select("id, timezone");
+    const { data, error } = await this.db
+      .from("profiles")
+      .select("id, timezone, theme, display_name, avatar_url");
     if (error) throw error;
     for (const r of (data ?? []) as RemoteProfile[]) await this.applyProfile(r);
   }
@@ -232,10 +237,16 @@ export class SyncEngine {
   // Regra: não sobrescreve registro local pendente (`_sync = 0`); marca `_sync = 1`.
 
   private async applyProfile(r: RemoteProfile): Promise<void> {
-    if (r.timezone == null) return;
     const local = await localDB.profiles.get(r.id);
     if (local && local._sync === 0) return;
-    await localDB.profiles.put({ id: r.id, timezone: r.timezone, _sync: 1 });
+    await localDB.profiles.put({
+      id: r.id,
+      timezone: r.timezone ?? local?.timezone ?? "UTC",
+      theme: r.theme ?? local?.theme ?? "system",
+      displayName: r.display_name ?? local?.displayName ?? null,
+      avatarUrl: r.avatar_url ?? local?.avatarUrl ?? null,
+      _sync: 1,
+    });
   }
 
   private async applyCategory(r: RemoteCategory): Promise<void> {
@@ -413,7 +424,10 @@ export class SyncEngine {
     if (!this.db) return;
     const rows = await localDB.profiles.where("_sync").equals(0).toArray();
     for (const p of rows) {
-      const { error } = await this.db.from("profiles").update({ timezone: p.timezone }).eq("id", p.id);
+      const { error } = await this.db
+        .from("profiles")
+        .update({ timezone: p.timezone, theme: p.theme, display_name: p.displayName, avatar_url: p.avatarUrl })
+        .eq("id", p.id);
       if (error) throw error;
       await localDB.profiles.update(p.id, { _sync: 1 });
     }

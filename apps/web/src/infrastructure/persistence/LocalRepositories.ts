@@ -9,6 +9,8 @@ import type {
   IReminderRepository,
   ITaskRepository,
   IsoDate,
+  ProfileSnapshot,
+  ProfileUpdate,
   Reminder,
   Task,
 } from "@habit/core";
@@ -17,6 +19,7 @@ import {
   type StoredCategory,
   type StoredExecutionLog,
   type StoredGoal,
+  type StoredProfile,
   type StoredReminder,
   type StoredTask,
 } from "./db";
@@ -80,8 +83,23 @@ export class LocalProfileRepository implements IProfileRepository {
     return row?.timezone ?? null;
   }
   async setTimezone(userId: string, timezone: string): Promise<void> {
-    await localDB.profiles.put({ id: userId, timezone, _sync: 0 });
+    const cur = await localDB.profiles.get(userId);
+    await localDB.profiles.put({ ...defaults(userId), ...cur, timezone, _sync: 0 });
   }
+  async getProfile(userId: string): Promise<ProfileSnapshot | null> {
+    const row = await localDB.profiles.get(userId);
+    if (!row) return null;
+    return { timezone: row.timezone, theme: row.theme, displayName: row.displayName, avatarUrl: row.avatarUrl };
+  }
+  async updateProfile(userId: string, patch: ProfileUpdate): Promise<void> {
+    const cur = await localDB.profiles.get(userId);
+    await localDB.profiles.put({ ...defaults(userId), ...cur, ...patch, _sync: 0 });
+  }
+}
+
+/** Valores-base de um profile local recém-criado (antes de qualquer pull). */
+function defaults(userId: string): StoredProfile {
+  return { id: userId, timezone: "UTC", theme: "system", displayName: null, avatarUrl: null, _sync: 0 };
 }
 
 export class LocalReminderRepository implements IReminderRepository {

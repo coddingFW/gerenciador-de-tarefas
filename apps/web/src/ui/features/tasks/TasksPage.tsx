@@ -30,13 +30,13 @@ export function TasksPage({ user }: { user: CurrentUser }) {
 
       <section>
         <div class="mb-2 flex items-baseline justify-between">
-          <h2 class="text-sm font-semibold text-slate-700">Pendentes</h2>
-          {tasks && <span class="text-xs text-slate-500">{pending.length}</span>}
+          <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Pendentes</h2>
+          {tasks && <span class="text-xs text-slate-500 dark:text-slate-400">{pending.length}</span>}
         </div>
         {tasks === undefined ? (
           <Skeleton />
         ) : pending.length === 0 ? (
-          <p class="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500">
+          <p class="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
             Nenhuma tarefa pendente. Crie uma acima 👆
           </p>
         ) : (
@@ -83,14 +83,14 @@ function AddTaskForm({ user }: { user: CurrentUser }) {
   };
 
   return (
-    <form onSubmit={submit} class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-      <h2 class="mb-3 text-sm font-semibold text-slate-700">Nova tarefa</h2>
+    <form onSubmit={submit} class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <h2 class="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">Nova tarefa</h2>
       <div class="flex flex-col gap-2 sm:flex-row">
         <input
           value={title}
           onInput={(e) => setTitle((e.target as HTMLInputElement).value)}
           placeholder="Ex.: Pagar a conta de luz"
-          class="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand"
+          class="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
         />
         <button
           type="submit"
@@ -123,14 +123,14 @@ function TaskRow({ task, user }: { task: Task; user: CurrentUser }) {
   };
 
   return (
-    <li class="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-      <p class={`min-w-0 truncate text-sm font-medium ${done ? "text-slate-400 line-through" : "text-slate-800"}`}>
+    <li class="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <p class={`min-w-0 truncate text-sm font-medium ${done ? "text-slate-400 line-through dark:text-slate-500" : "text-slate-800 dark:text-slate-100"}`}>
         {task.title}
       </p>
       {done ? (
         <button
           onClick={() => void undo()}
-          class="ml-3 shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium text-slate-500 hover:bg-slate-100"
+          class="ml-3 shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
         >
           Desfazer
         </button>
@@ -150,7 +150,7 @@ function Skeleton() {
   return (
     <ul class="flex flex-col gap-2">
       {[0, 1].map((i) => (
-        <li key={i} class="h-12 animate-pulse rounded-xl border border-slate-200 bg-slate-100" />
+        <li key={i} class="h-12 animate-pulse rounded-xl border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-800" />
       ))}
     </ul>
   );

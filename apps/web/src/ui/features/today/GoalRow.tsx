@@ -37,13 +37,13 @@ export function GoalRow({
   };
 
   return (
-    <li class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+    <li class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <div class="flex items-center justify-between">
       <div class="min-w-0">
-        <p class={`truncate text-sm font-medium ${done ? "text-slate-400 line-through" : "text-slate-800"}`}>
+        <p class={`truncate text-sm font-medium ${done ? "text-slate-400 line-through dark:text-slate-500" : "text-slate-800 dark:text-slate-100"}`}>
           {goal.title}
         </p>
-        <p class="text-xs text-slate-500">
+        <p class="text-xs text-slate-500 dark:text-slate-400">
           {FREQUENCY_LABEL[goal.frequency]}
           {goal.targetMinutes ? ` · meta ${goal.targetMinutes} min` : ""}
         </p>
@@ -53,21 +53,21 @@ export function GoalRow({
           onClick={() => setShowReminder((v) => !v)}
           aria-label="Lembrete do hábito"
           aria-pressed={showReminder}
-          class="rounded-lg px-2 py-1.5 text-sm text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+          class="rounded-lg px-2 py-1.5 text-sm text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
         >
           🔔
         </button>
         <button
           onClick={() => setEditing(true)}
           aria-label="Editar hábito"
-          class="rounded-lg px-2 py-1.5 text-sm text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+          class="rounded-lg px-2 py-1.5 text-sm text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
         >
           ✎
         </button>
         <button
           onClick={() => void archive()}
           aria-label="Arquivar hábito"
-          class="rounded-lg px-2 py-1.5 text-sm text-slate-400 hover:bg-slate-100 hover:text-red-600"
+          class="rounded-lg px-2 py-1.5 text-sm text-slate-400 hover:bg-slate-100 hover:text-red-600 dark:hover:bg-slate-800"
         >
           🗑
         </button>
@@ -76,7 +76,7 @@ export function GoalRow({
           disabled={done}
           class={`rounded-lg px-3 py-1.5 text-sm font-medium ${
             done
-              ? "cursor-default bg-emerald-100 text-emerald-700"
+              ? "cursor-default bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300"
               : "bg-brand text-white hover:bg-brand-dark"
           }`}
         >
@@ -129,17 +129,17 @@ function GoalEditor({
   };
 
   return (
-    <li class="rounded-xl border border-brand/40 bg-white p-3 shadow-sm">
+    <li class="rounded-xl border border-brand/40 bg-white p-3 shadow-sm dark:bg-slate-900">
       <form onSubmit={save} class="flex flex-col gap-2 sm:flex-row sm:items-center">
         <input
           value={title}
           onInput={(e) => setTitle((e.target as HTMLInputElement).value)}
-          class="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand"
+          class="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
         />
         <select
           value={frequency}
           onChange={(e) => setFrequency((e.target as HTMLSelectElement).value as GoalFrequency)}
-          class="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+          class="rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
         >
           <option value="daily">Diário</option>
           <option value="weekly">Semanal</option>
@@ -158,7 +158,7 @@ function GoalEditor({
             value={categoryId}
             onChange={(e) => setCategoryId((e.target as HTMLSelectElement).value)}
             aria-label="Categoria"
-            class="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+            class="rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
           >
             <option value="">Sem categoria</option>
             {categories.map((c) => (
@@ -179,7 +179,7 @@ function GoalEditor({
           <button
             type="button"
             onClick={onClose}
-            class="rounded-lg px-3 py-2 text-sm font-medium text-slate-500 hover:bg-slate-100"
+            class="rounded-lg px-3 py-2 text-sm font-medium text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
           >
             Cancelar
           </button>

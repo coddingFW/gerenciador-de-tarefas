@@ -3,7 +3,7 @@
  * Adapters (SupabaseRepository, IndexedDbRepository, etc.). Regra de dependência
  * da Clean Architecture: o domínio depende destas abstrações, nunca do concreto.
  */
-import type { Category, ExecutionLog, Goal, IsoDate, Reminder, Task } from "../../domain/entities/index.js";
+import type { Category, ExecutionLog, Goal, IsoDate, Reminder, Task, Theme } from "../../domain/entities/index.js";
 import type { DomainEvent } from "../../domain/events/index.js";
 
 export interface IClock {
@@ -47,10 +47,24 @@ export interface IReminderRepository {
   listForUser(userId: string): Promise<Reminder[]>;
 }
 
+/** Subconjunto sincronizável do profile mantido no cliente. */
+export interface ProfileSnapshot {
+  timezone: string;
+  theme: Theme;
+  displayName: string | null;
+  avatarUrl: string | null;
+}
+
+/** Campos alteráveis pelo dono (timezone tem seu próprio fluxo silencioso). */
+export type ProfileUpdate = Partial<Pick<ProfileSnapshot, "theme" | "displayName" | "avatarUrl">>;
+
 export interface IProfileRepository {
   /** Fuso persistido do usuário, ou `null` se ainda desconhecido. */
   getTimezone(userId: string): Promise<string | null>;
   setTimezone(userId: string, timezone: string): Promise<void>;
+  /** Snapshot local do profile, ou `null` se ainda desconhecido. */
+  getProfile(userId: string): Promise<ProfileSnapshot | null>;
+  updateProfile(userId: string, patch: ProfileUpdate): Promise<void>;
 }
 
 export interface IEventBus {

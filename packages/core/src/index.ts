@@ -37,6 +37,8 @@ export { ReorderCategories } from "./application/use-cases/ReorderCategories.js"
 export type { ReorderCategoriesInput } from "./application/use-cases/ReorderCategories.js";
 export { SyncUserTimezone } from "./application/use-cases/SyncUserTimezone.js";
 export type { SyncUserTimezoneInput } from "./application/use-cases/SyncUserTimezone.js";
+export { UpdateProfile } from "./application/use-cases/UpdateProfile.js";
+export type { UpdateProfileInput } from "./application/use-cases/UpdateProfile.js";
 export { CompleteTask } from "./application/use-cases/CompleteTask.js";
 export type { CompleteTaskInput } from "./application/use-cases/CompleteTask.js";
 export { LogExecution } from "./application/use-cases/LogExecution.js";

@@ -1,5 +1,5 @@
 import Dexie, { type Table } from "dexie";
-import type { Category, ExecutionLog, Goal, Reminder, Task } from "@habit/core";
+import type { Category, ExecutionLog, Goal, Reminder, Task, Theme } from "@habit/core";
 
 /**
  * Estado de sincronização de cada registro local (Fase 1 §8).
@@ -12,8 +12,15 @@ export type StoredGoal = Goal & { _sync: SyncState };
 export type StoredTask = Task & { _sync: SyncState };
 export type StoredCategory = Category & { _sync: SyncState };
 export type StoredExecutionLog = ExecutionLog & { id: string; _sync: SyncState };
-/** Espelho local mínimo do profile — hoje só o fuso (fonte da verdade do cálculo). */
-export type StoredProfile = { id: string; timezone: string; _sync: SyncState };
+/** Espelho local do profile: fuso (cálculo) + preferências (tema, nome, avatar). */
+export type StoredProfile = {
+  id: string;
+  timezone: string;
+  theme: Theme;
+  displayName: string | null;
+  avatarUrl: string | null;
+  _sync: SyncState;
+};
 export type StoredReminder = Reminder & { _sync: SyncState };
 /** Subscription Web Push do dispositivo — só upload (o servidor é o consumidor). */
 export type StoredPushSubscription = {

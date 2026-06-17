@@ -1,6 +1,8 @@
 import { useState } from "preact/hooks";
 import { useAuth } from "./lib/auth";
+import { useTheme } from "./lib/useTheme";
 import { SyncBadge } from "./ui/components/SyncBadge";
+import { ThemeToggle } from "./ui/components/ThemeToggle";
 import { TodayPage } from "./ui/features/today/TodayPage";
 import { TasksPage } from "./ui/features/tasks/TasksPage";
 import { CategoriesPage } from "./ui/features/categories/CategoriesPage";
@@ -10,6 +12,7 @@ type Tab = "today" | "tasks" | "categories" | "dashboard";
 
 export function App() {
   const { user, loading, backend, signInWithGoogle, signOut } = useAuth();
+  const { theme, setTheme } = useTheme(user?.id);
   const [tab, setTab] = useState<Tab>("today");
 
   if (loading) {
@@ -19,9 +22,9 @@ export function App() {
   if (!user) {
     return (
       <Centered>
-        <div class="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm">
-          <h1 class="text-lg font-bold text-slate-800">Habit Tracker</h1>
-          <p class="mt-1 text-sm text-slate-500">Acompanhe hábitos e produtividade.</p>
+        <div class="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <h1 class="text-lg font-bold text-slate-800 dark:text-slate-100">Habit Tracker</h1>
+          <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Acompanhe hábitos e produtividade.</p>
           <button
             onClick={() => void signInWithGoogle()}
             class="mt-5 w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-dark"
@@ -35,15 +38,19 @@ export function App() {
 
   return (
     <div class="mx-auto flex min-h-full max-w-xl flex-col">
-      <header class="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur">
+      <header class="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
         <div>
-          <h1 class="text-base font-bold text-slate-800">Habit Tracker</h1>
-          <p class="text-xs text-slate-500">{user.name}</p>
+          <h1 class="text-base font-bold text-slate-800 dark:text-slate-100">Habit Tracker</h1>
+          <p class="text-xs text-slate-500 dark:text-slate-400">{user.name}</p>
         </div>
         <div class="flex items-center gap-2">
+          <ThemeToggle theme={theme} setTheme={setTheme} />
           <SyncBadge />
           {backend && (
-            <button onClick={() => void signOut()} class="text-xs text-slate-500 hover:text-slate-800">
+            <button
+              onClick={() => void signOut()}
+              class="text-xs text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
+            >
               Sair
             </button>
           )}
@@ -88,7 +95,9 @@ function TabButton({
     <button
       onClick={onClick}
       class={`shrink-0 whitespace-nowrap rounded-lg px-4 py-1.5 text-sm font-medium ${
-        active ? "bg-brand text-white" : "text-slate-600 hover:bg-slate-100"
+        active
+          ? "bg-brand text-white"
+          : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
       }`}
     >
       {children}
@@ -97,5 +106,9 @@ function TabButton({
 }
 
 function Centered({ children }: { children: preact.ComponentChildren }) {
-  return <div class="flex min-h-full items-center justify-center p-6 text-sm text-slate-500">{children}</div>;
+  return (
+    <div class="flex min-h-full items-center justify-center p-6 text-sm text-slate-500 dark:text-slate-400">
+      {children}
+    </div>
+  );
 }

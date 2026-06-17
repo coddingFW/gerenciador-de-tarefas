@@ -24,11 +24,11 @@ export function CategoriesPage({ user }: { user: CurrentUser }) {
       <AddCategoryForm user={user} />
 
       <section>
-        <h2 class="mb-2 text-sm font-semibold text-slate-700">Suas categorias</h2>
+        <h2 class="mb-2 text-sm font-semibold text-slate-700 dark:text-slate-200">Suas categorias</h2>
         {categories === undefined ? (
           <Skeleton />
         ) : categories.length === 0 ? (
-          <p class="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500">
+          <p class="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
             Nenhuma categoria ainda. Crie a primeira acima 👆
           </p>
         ) : (
@@ -74,14 +74,14 @@ function AddCategoryForm({ user }: { user: CurrentUser }) {
   };
 
   return (
-    <form onSubmit={submit} class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-      <h2 class="mb-3 text-sm font-semibold text-slate-700">Nova categoria</h2>
+    <form onSubmit={submit} class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <h2 class="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">Nova categoria</h2>
       <div class="flex flex-col gap-3">
         <input
           value={name}
           onInput={(e) => setName((e.target as HTMLInputElement).value)}
           placeholder="Ex.: Saúde"
-          class="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand"
+          class="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
         />
         <ColorPicker value={color} onChange={setColor} />
         <IconPicker value={icon} onChange={setIcon} />
@@ -132,14 +132,14 @@ function CategoryRow({
   }
 
   return (
-    <li class="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-      <CategoryBadge category={category} className="min-w-0 text-sm font-medium text-slate-800" />
-      <div class="ml-3 flex shrink-0 items-center gap-1 text-slate-400">
+    <li class="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <CategoryBadge category={category} className="min-w-0 text-sm font-medium text-slate-800 dark:text-slate-100" />
+      <div class="ml-3 flex shrink-0 items-center gap-1 text-slate-400 dark:text-slate-500">
         <button
           onClick={() => void move(-1)}
           disabled={isFirst}
           aria-label="Mover para cima"
-          class="rounded px-1.5 py-1 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-30"
+          class="rounded px-1.5 py-1 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200 disabled:opacity-30"
         >
           ↑
         </button>
@@ -147,21 +147,21 @@ function CategoryRow({
           onClick={() => void move(1)}
           disabled={isLast}
           aria-label="Mover para baixo"
-          class="rounded px-1.5 py-1 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-30"
+          class="rounded px-1.5 py-1 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200 disabled:opacity-30"
         >
           ↓
         </button>
         <button
           onClick={() => setEditing(true)}
           aria-label="Editar categoria"
-          class="rounded px-2 py-1 hover:bg-slate-100 hover:text-slate-700"
+          class="rounded px-2 py-1 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
         >
           ✎
         </button>
         <button
           onClick={() => void archive()}
           aria-label="Arquivar categoria"
-          class="rounded px-2 py-1 hover:bg-slate-100 hover:text-red-600"
+          class="rounded px-2 py-1 hover:bg-slate-100 hover:text-red-600 dark:hover:bg-slate-800"
         >
           🗑
         </button>
@@ -201,12 +201,12 @@ function CategoryEditor({
   };
 
   return (
-    <li class="rounded-xl border border-brand/40 bg-white p-3 shadow-sm">
+    <li class="rounded-xl border border-brand/40 bg-white p-3 shadow-sm dark:bg-slate-900">
       <form onSubmit={save} class="flex flex-col gap-3">
         <input
           value={name}
           onInput={(e) => setName((e.target as HTMLInputElement).value)}
-          class="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand"
+          class="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
         />
         <ColorPicker value={color} onChange={setColor} />
         <IconPicker value={icon} onChange={setIcon} />
@@ -217,7 +217,7 @@ function CategoryEditor({
           <button
             type="button"
             onClick={onClose}
-            class="rounded-lg px-3 py-2 text-sm font-medium text-slate-500 hover:bg-slate-100"
+            class="rounded-lg px-3 py-2 text-sm font-medium text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
           >
             Cancelar
           </button>
@@ -256,7 +256,7 @@ function IconPicker({ value, onChange }: { value: string; onChange: (i: string) 
           onClick={() => onChange(i)}
           aria-label={`Ícone ${i}`}
           aria-pressed={value === i}
-          class={`h-8 w-8 rounded-lg text-base ${value === i ? "bg-brand/10 ring-1 ring-brand" : "hover:bg-slate-100"}`}
+          class={`h-8 w-8 rounded-lg text-base ${value === i ? "bg-brand/10 ring-1 ring-brand" : "hover:bg-slate-100 dark:hover:bg-slate-800"}`}
         >
           {i}
         </button>
@@ -269,7 +269,7 @@ function Skeleton() {
   return (
     <ul class="flex flex-col gap-2">
       {[0, 1, 2].map((i) => (
-        <li key={i} class="h-12 animate-pulse rounded-xl border border-slate-200 bg-slate-100" />
+        <li key={i} class="h-12 animate-pulse rounded-xl border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-800" />
       ))}
     </ul>
   );

@@ -48,7 +48,7 @@ export function HistoryChart({
               width={barW}
               height={h}
               rx={1.5}
-              fill={v > 0 ? "#0ea5e9" : "#e2e8f0"}
+              class={v > 0 ? "fill-brand" : "fill-slate-200 dark:fill-slate-700"}
             >
               <title>{`${d.day}: ${d.executions} execuç${d.executions === 1 ? "ão" : "ões"}, ${d.minutes} min`}</title>
             </rect>
@@ -57,7 +57,7 @@ export function HistoryChart({
                 x={pad.left + i * slot + slot / 2}
                 y={H - 6}
                 text-anchor="middle"
-                class="fill-slate-400"
+                class="fill-slate-400 dark:fill-slate-500"
                 style={{ fontSize: "7px" }}
               >
                 {d.day.slice(5)}

@@ -18,6 +18,8 @@ import type {
   IProfileRepository,
   IReminderRepository,
   ITaskRepository,
+  ProfileSnapshot,
+  ProfileUpdate,
 } from "../src/application/ports/index.js";
 
 export class FakeClock implements IClock {
@@ -100,6 +102,7 @@ export class FakeCategoryRepository implements ICategoryRepository {
 
 export class FakeProfileRepository implements IProfileRepository {
   readonly timezones = new Map<string, string>();
+  readonly profiles = new Map<string, ProfileSnapshot>();
   writes = 0;
   constructor(initial: Record<string, string> = {}) {
     for (const [id, tz] of Object.entries(initial)) this.timezones.set(id, tz);
@@ -110,6 +113,19 @@ export class FakeProfileRepository implements IProfileRepository {
   async setTimezone(userId: string, timezone: string): Promise<void> {
     this.writes++;
     this.timezones.set(userId, timezone);
+  }
+  async getProfile(userId: string): Promise<ProfileSnapshot | null> {
+    return this.profiles.get(userId) ?? null;
+  }
+  async updateProfile(userId: string, patch: ProfileUpdate): Promise<void> {
+    this.writes++;
+    const cur: ProfileSnapshot = this.profiles.get(userId) ?? {
+      timezone: this.timezones.get(userId) ?? "UTC",
+      theme: "system",
+      displayName: null,
+      avatarUrl: null,
+    };
+    this.profiles.set(userId, { ...cur, ...patch });
   }
 }
 

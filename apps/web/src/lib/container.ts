@@ -12,6 +12,7 @@ import {
   ReorderCategories,
   ScheduleReminder,
   SyncUserTimezone,
+  UpdateProfile,
 } from "@habit/core";
 import { SystemClock } from "../infrastructure/adapters/SystemClock";
 import { CryptoIdGenerator } from "../infrastructure/adapters/CryptoIdGenerator";
@@ -55,6 +56,8 @@ export const container = {
   editCategory: new EditCategory(categories, bus),
   reorderCategories: new ReorderCategories(categories, bus),
   syncUserTimezone: new SyncUserTimezone(profiles),
+  updateProfile: new UpdateProfile(profiles, bus),
+  profiles,
   scheduleReminder: new ScheduleReminder(reminders, bus, clock, ids),
   cancelReminder: new CancelReminder(reminders, bus),
   reminders,

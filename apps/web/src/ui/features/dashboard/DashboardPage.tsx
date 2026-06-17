@@ -68,9 +68,9 @@ export function DashboardPage({ user }: { user: CurrentUser }) {
       <HistorySection logs={logsRaw} today={today} />
 
       <section>
-        <h2 class="mb-2 text-sm font-semibold text-slate-700">Por hábito</h2>
+        <h2 class="mb-2 text-sm font-semibold text-slate-700 dark:text-slate-200">Por hábito</h2>
         {perGoal.length === 0 ? (
-          <p class="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500">
+          <p class="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
             Sem dados ainda. Registre execuções na aba Hoje.
           </p>
         ) : (
@@ -78,17 +78,17 @@ export function DashboardPage({ user }: { user: CurrentUser }) {
             {perGoal.map(({ goal, streak, minutes, executions }) => (
               <li
                 key={goal.id}
-                class="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3 shadow-sm"
+                class="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900"
               >
                 <div class="min-w-0">
-                  <p class="truncate text-sm font-medium text-slate-800">{goal.title}</p>
-                  <p class="text-xs text-slate-500">
+                  <p class="truncate text-sm font-medium text-slate-800 dark:text-slate-100">{goal.title}</p>
+                  <p class="text-xs text-slate-500 dark:text-slate-400">
                     {executions} execuç{executions === 1 ? "ão" : "ões"} · {minutes} min
                   </p>
                 </div>
                 <div class="ml-3 shrink-0 text-right">
-                  <p class="text-sm font-semibold text-slate-800">{streak.current}🔥</p>
-                  <p class="text-xs text-slate-500">melhor {streak.best}</p>
+                  <p class="text-sm font-semibold text-slate-800 dark:text-slate-100">{streak.current}🔥</p>
+                  <p class="text-xs text-slate-500 dark:text-slate-400">melhor {streak.best}</p>
                 </div>
               </li>
             ))}
@@ -106,7 +106,7 @@ function HistorySection({ logs, today }: { logs: ExecutionLog[] | undefined; tod
   return (
     <section>
       <div class="mb-2 flex items-center justify-between gap-2">
-        <h2 class="text-sm font-semibold text-slate-700">Histórico</h2>
+        <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Histórico</h2>
         <div class="flex items-center gap-1">
           <Toggle active={metric === "executions"} onClick={() => setMetric("executions")}>
             Execuções
@@ -114,7 +114,7 @@ function HistorySection({ logs, today }: { logs: ExecutionLog[] | undefined; tod
           <Toggle active={metric === "minutes"} onClick={() => setMetric("minutes")}>
             Minutos
           </Toggle>
-          <span class="mx-1 h-4 w-px bg-slate-200" />
+          <span class="mx-1 h-4 w-px bg-slate-200 dark:bg-slate-700" />
           <Toggle active={period === 7} onClick={() => setPeriod(7)}>
             7d
           </Toggle>
@@ -123,7 +123,7 @@ function HistorySection({ logs, today }: { logs: ExecutionLog[] | undefined; tod
           </Toggle>
         </div>
       </div>
-      <div class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+      <div class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <HistoryBody logs={logs} today={today} period={period} metric={metric} />
       </div>
     </section>
@@ -142,11 +142,11 @@ function HistoryBody({
   metric: "executions" | "minutes";
 }) {
   if (logs === undefined) {
-    return <div class="h-32 w-full animate-pulse rounded-lg bg-slate-100" />;
+    return <div class="h-32 w-full animate-pulse rounded-lg bg-slate-100 dark:bg-slate-800" />;
   }
   if (logs.length === 0) {
     return (
-      <p class="py-8 text-center text-sm text-slate-500">
+      <p class="py-8 text-center text-sm text-slate-500 dark:text-slate-400">
         Sem dados ainda. Registre execuções na aba Hoje.
       </p>
     );
@@ -161,17 +161,17 @@ function HistoryBody({
     return (
       <div class="flex flex-col gap-2">
         <HistoryChart data={series} metric={metric} />
-        <div class="flex items-center justify-between text-xs text-slate-500">
+        <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
           <span>
             {totalExec} execuç{totalExec === 1 ? "ão" : "ões"} · {totalMin} min
           </span>
-          {activeDays < 2 && <span class="text-amber-600">Dados insuficientes para tendência</span>}
+          {activeDays < 2 && <span class="text-amber-600 dark:text-amber-400">Dados insuficientes para tendência</span>}
         </div>
       </div>
     );
   } catch {
     return (
-      <p class="py-8 text-center text-sm text-red-600">
+      <p class="py-8 text-center text-sm text-red-600 dark:text-red-400">
         Não foi possível carregar o histórico. Tente novamente.
       </p>
     );
@@ -191,7 +191,7 @@ function Toggle({
     <button
       onClick={onClick}
       class={`rounded-md px-2 py-1 text-xs font-medium ${
-        active ? "bg-brand text-white" : "text-slate-500 hover:bg-slate-100"
+        active ? "bg-brand text-white" : "text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
       }`}
     >
       {children}
@@ -201,9 +201,9 @@ function Toggle({
 
 function Stat({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
   return (
-    <div class={`rounded-xl border p-3 shadow-sm ${accent ? "border-brand bg-brand/5" : "border-slate-200 bg-white"}`}>
-      <p class="text-xs text-slate-500">{label}</p>
-      <p class={`mt-1 text-xl font-bold ${accent ? "text-brand-dark" : "text-slate-800"}`}>{value}</p>
+    <div class={`rounded-xl border p-3 shadow-sm ${accent ? "border-brand bg-brand/5 dark:bg-brand/10" : "border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"}`}>
+      <p class="text-xs text-slate-500 dark:text-slate-400">{label}</p>
+      <p class={`mt-1 text-xl font-bold ${accent ? "text-brand-dark dark:text-brand" : "text-slate-800 dark:text-slate-100"}`}>{value}</p>
     </div>
   );
 }

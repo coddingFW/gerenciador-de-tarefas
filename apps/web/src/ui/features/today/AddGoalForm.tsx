@@ -33,19 +33,19 @@ export function AddGoalForm({ user, categories }: { user: CurrentUser; categorie
   };
 
   return (
-    <form onSubmit={submit} class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-      <h2 class="mb-3 text-sm font-semibold text-slate-700">Novo hábito</h2>
+    <form onSubmit={submit} class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <h2 class="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">Novo hábito</h2>
       <div class="flex flex-col gap-2 sm:flex-row">
         <input
           value={title}
           onInput={(e) => setTitle((e.target as HTMLInputElement).value)}
           placeholder="Ex.: Ler 10 páginas"
-          class="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand"
+          class="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
         />
         <select
           value={frequency}
           onChange={(e) => setFrequency((e.target as HTMLSelectElement).value as GoalFrequency)}
-          class="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+          class="rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
         >
           <option value="daily">Diário</option>
           <option value="weekly">Semanal</option>
@@ -71,7 +71,7 @@ export function AddGoalForm({ user, categories }: { user: CurrentUser; categorie
           value={categoryId}
           onChange={(e) => setCategoryId((e.target as HTMLSelectElement).value)}
           aria-label="Categoria"
-          class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm sm:w-auto"
+          class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm sm:w-auto dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
         >
           <option value="">Sem categoria</option>
           {categories.map((c) => (

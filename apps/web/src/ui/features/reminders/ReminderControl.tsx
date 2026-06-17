@@ -99,25 +99,25 @@ export function ReminderControl({
   const needsInstallHint = isIOS() && !isStandalone();
 
   return (
-    <div class="mt-2 rounded-xl border border-brand/40 bg-white p-3 text-sm shadow-sm">
+    <div class="mt-2 rounded-xl border border-brand/40 bg-white p-3 text-sm shadow-sm dark:bg-slate-900">
       <div class="flex items-center justify-between">
-        <p class="font-medium text-slate-700">Lembrete{active ? " (ativo)" : ""}</p>
-        <button onClick={onClose} class="text-slate-400 hover:text-slate-700" aria-label="Fechar">
+        <p class="font-medium text-slate-700 dark:text-slate-200">Lembrete{active ? " (ativo)" : ""}</p>
+        <button onClick={onClose} class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200" aria-label="Fechar">
           ✕
         </button>
       </div>
 
       {!pushSupported() ? (
-        <p class="mt-2 text-xs text-slate-500">Este navegador não suporta notificações push.</p>
+        <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">Este navegador não suporta notificações push.</p>
       ) : (
         <>
           <div class="mt-3 flex items-center gap-2">
-            <label class="text-slate-600">Horário</label>
+            <label class="text-slate-600 dark:text-slate-300">Horário</label>
             <input
               type="time"
               value={time}
               onInput={(e) => setTime((e.target as HTMLInputElement).value)}
-              class="rounded-lg border border-slate-300 px-2 py-1.5"
+              class="rounded-lg border border-slate-300 px-2 py-1.5 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
             />
           </div>
 
@@ -129,7 +129,7 @@ export function ReminderControl({
                 class={`rounded-lg px-2.5 py-1.5 text-xs font-medium ${
                   days.includes(d.value)
                     ? "bg-brand text-white"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                 }`}
               >
                 {d.label}
@@ -138,7 +138,7 @@ export function ReminderControl({
           </div>
 
           {needsInstallHint && (
-            <p class="mt-3 rounded-lg bg-amber-50 p-2 text-xs text-amber-700">
+            <p class="mt-3 rounded-lg bg-amber-50 p-2 text-xs text-amber-700 dark:bg-amber-950 dark:text-amber-300">
               📲 No iPhone, toque em <b>Compartilhar → Adicionar à Tela de Início</b> e abra o app por
               lá para receber notificações.
             </p>
@@ -147,7 +147,7 @@ export function ReminderControl({
           <div class="mt-3 flex flex-wrap items-center gap-2">
             <button
               onClick={() => void enableNotifications()}
-              class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+              class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
             >
               Ativar notificações
             </button>
@@ -160,15 +160,15 @@ export function ReminderControl({
             {active && (
               <button
                 onClick={() => void disable()}
-                class="rounded-lg px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
+                class="rounded-lg px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950"
               >
                 Desativar
               </button>
             )}
           </div>
 
-          {saved && <p class="mt-2 text-xs text-emerald-600">Lembrete salvo. ✅</p>}
-          {pushHint && <p class="mt-2 text-xs text-slate-600">{pushHint}</p>}
+          {saved && <p class="mt-2 text-xs text-emerald-600 dark:text-emerald-400">Lembrete salvo. ✅</p>}
+          {pushHint && <p class="mt-2 text-xs text-slate-600 dark:text-slate-300">{pushHint}</p>}
         </>
       )}
     </div>

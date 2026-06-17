@@ -6,6 +6,7 @@
 export type DomainEventType =
   | "UserCreated"
   | "UserLoggedIn"
+  | "ProfileUpdated"
   | "TaskCreated"
   | "TaskCompleted"
   | "TaskSkipped"

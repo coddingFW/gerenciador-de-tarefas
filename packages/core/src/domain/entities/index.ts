@@ -5,6 +5,8 @@
 
 export type UserRole = "user" | "admin";
 export type UserPlan = "free" | "premium";
+/** Preferência de tema da UI (default 'system' = segue o SO). */
+export type Theme = "light" | "dark" | "system";
 export type GoalFrequency = "daily" | "weekly" | "monthly";
 export type TaskStatus = "pending" | "done" | "skipped";
 export type ExecutionSource = "manual" | "timer" | "import";
@@ -22,6 +24,7 @@ export interface Profile {
   role: UserRole;
   plan: UserPlan;
   timezone: string;
+  theme: Theme;
   onboardingCompletedAt: string | null;
   createdAt: string;
 }
