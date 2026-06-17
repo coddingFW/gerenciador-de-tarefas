@@ -43,17 +43,21 @@ ao Sentry.
 
 ---
 
-## Fase 2 — Lembretes / notificações 🔴
+## Fase 2 — Lembretes / notificações 🔴 — 🚧 P0 CÓDIGO-COMPLETO
 *Objetivo: a feature central que falta num gerenciador de hábitos.*
+Decisões: VAPID próprio · recorrência simples (horário + dias) · só hábitos · teste no iPhone.
 
-| # | Tarefa | Esforço | Estado |
-|---|--------|---------|--------|
-| 2.1 | Modelo de domínio do lembrete (horário, dias da semana, hábito/tarefa alvo) + port `IReminderRepository` | 🟡 | 🔲 |
-| 2.2 | Web Push: VAPID keys, registro de subscription, persistência no Supabase | 🟡 | 🔲 |
-| 2.3 | Service worker recebe push e exibe notificação (PWA já existe como base) | 🟡 | 🔲 |
-| 2.4 | Edge Function agendada que dispara os pushes no horário (respeitando timezone do perfil) | 🔴 | 🔲 |
-| 2.5 | UI de configuração de lembretes por hábito | 🟡 | 🔲 |
+| # | Tarefa (P0) | Estado |
+|---|--------|--------|
+| 2.1 | Domínio `Reminder` + `IReminderRepository` + `ScheduleReminder`/`CancelReminder` + testes | ✅ |
+| 2.2 | Migration `0012` (tabelas, RLS, grants, realtime, `claim_due_reminders`, cron) | ✅ |
+| 2.3 | Dexie v3 + SyncEngine (reminders + push_subscriptions) | ✅ |
+| 2.4 | PWA `injectManifest` + `src/sw.ts` (push/notificationclick) | ✅ |
+| 2.5 | Helper Web Push (VAPID) + UI `ReminderControl` no GoalRow (onboarding iOS) | ✅ |
+| 2.6 | Edge Function `send-reminders` (web-push, janela, idempotência) | ✅ |
+| — | **Operador:** `supabase db push`, deploy da function, `VAPID_*` secrets + `VITE_VAPID_PUBLIC_KEY`, teste no iPhone | 🔲 |
 
+**P1 (próximo):** editar/excluir lembrete · deep-link no clique · pgTAP + E2E do fluxo.
 **Pronto quando:** o usuário define um lembrete e recebe a notificação no horário,
 no fuso correto, mesmo com o app fechado.
 
