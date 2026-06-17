@@ -6,8 +6,10 @@ import type {
   IExecutionLogRepository,
   IGoalRepository,
   IProfileRepository,
+  IReminderRepository,
   ITaskRepository,
   IsoDate,
+  Reminder,
   Task,
 } from "@habit/core";
 import {
@@ -15,6 +17,7 @@ import {
   type StoredCategory,
   type StoredExecutionLog,
   type StoredGoal,
+  type StoredReminder,
   type StoredTask,
 } from "./db";
 
@@ -27,6 +30,7 @@ import {
 const stripGoal = ({ _sync, ...g }: StoredGoal): Goal => g;
 const stripTask = ({ _sync, ...t }: StoredTask): Task => t;
 const stripCategory = ({ _sync, ...c }: StoredCategory): Category => c;
+const stripReminder = ({ _sync, ...r }: StoredReminder): Reminder => r;
 
 export class LocalGoalRepository implements IGoalRepository {
   async byId(id: string): Promise<Goal | null> {
@@ -77,6 +81,20 @@ export class LocalProfileRepository implements IProfileRepository {
   }
   async setTimezone(userId: string, timezone: string): Promise<void> {
     await localDB.profiles.put({ id: userId, timezone, _sync: 0 });
+  }
+}
+
+export class LocalReminderRepository implements IReminderRepository {
+  async byId(id: string): Promise<Reminder | null> {
+    const row = await localDB.reminders.get(id);
+    return row ? stripReminder(row) : null;
+  }
+  async save(reminder: Reminder): Promise<void> {
+    await localDB.reminders.put({ ...reminder, _sync: 0 });
+  }
+  async listForUser(userId: string): Promise<Reminder[]> {
+    const rows = await localDB.reminders.where("userId").equals(userId).toArray();
+    return rows.map(stripReminder);
   }
 }
 

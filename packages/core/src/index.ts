@@ -41,3 +41,7 @@ export { CompleteTask } from "./application/use-cases/CompleteTask.js";
 export type { CompleteTaskInput } from "./application/use-cases/CompleteTask.js";
 export { LogExecution } from "./application/use-cases/LogExecution.js";
 export type { LogExecutionInput } from "./application/use-cases/LogExecution.js";
+export { ScheduleReminder } from "./application/use-cases/ScheduleReminder.js";
+export type { ScheduleReminderInput } from "./application/use-cases/ScheduleReminder.js";
+export { CancelReminder } from "./application/use-cases/CancelReminder.js";
+export type { CancelReminderInput } from "./application/use-cases/CancelReminder.js";

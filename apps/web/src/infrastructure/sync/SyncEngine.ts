@@ -1,6 +1,6 @@
 import type { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
 import type { Table } from "dexie";
-import type { ExecutionSource, GoalFrequency, TaskStatus } from "@habit/core";
+import type { ExecutionSource, GoalFrequency, TaskStatus, Weekday } from "@habit/core";
 import { localDB, type SyncState } from "../persistence/db";
 
 export interface SyncStatus {
@@ -62,6 +62,15 @@ interface RemoteLog {
   minutes_spent: number;
   source: ExecutionSource;
   client_event_id: string;
+}
+interface RemoteReminder {
+  id: string;
+  user_id: string;
+  goal_id: string;
+  time_local: string; // o Postgres devolve "HH:MM:SS"
+  weekdays: number[];
+  active: boolean;
+  created_at: string;
 }
 
 /** Forma mínima de um evento `postgres_changes` do Supabase Realtime. */
@@ -140,6 +149,8 @@ export class SyncEngine {
       await this.pushGoals();
       await this.pushExecutionLogs();
       await this.pushTasks();
+      await this.pushReminders();
+      await this.pushPushSubscriptions();
       this.patch({ lastSyncAt: Date.now() });
     } catch {
       // Falha de rede: mantém pendentes e tenta no próximo evento 'online'.
@@ -165,6 +176,7 @@ export class SyncEngine {
       await this.pullGoals();
       await this.pullTasks();
       await this.pullExecutionLogs();
+      await this.pullReminders();
       this.patch({ lastSyncAt: Date.now() });
     } catch {
       // Rede instável: tenta de novo no próximo bootstrap/online.
@@ -207,6 +219,13 @@ export class SyncEngine {
     const { data, error } = await this.db.from("execution_logs").select("*");
     if (error) throw error;
     for (const r of (data ?? []) as RemoteLog[]) await this.applyExecutionLog(r);
+  }
+
+  private async pullReminders(): Promise<void> {
+    if (!this.db) return;
+    const { data, error } = await this.db.from("reminders").select("*");
+    if (error) throw error;
+    for (const r of (data ?? []) as RemoteReminder[]) await this.applyReminder(r);
   }
 
   // --- apply: aplica UMA linha remota ao Dexie. Reusado por pull e realtime.
@@ -292,6 +311,21 @@ export class SyncEngine {
     });
   }
 
+  private async applyReminder(r: RemoteReminder): Promise<void> {
+    const local = await localDB.reminders.get(r.id);
+    if (local && local._sync === 0) return;
+    await localDB.reminders.put({
+      id: r.id,
+      userId: r.user_id,
+      goalId: r.goal_id,
+      timeLocal: r.time_local.slice(0, 5), // "HH:MM:SS" → "HH:MM"
+      weekdays: r.weekdays as Weekday[],
+      active: r.active,
+      createdAt: r.created_at,
+      _sync: 1,
+    });
+  }
+
   // ---- Realtime (Supabase postgres_changes): sync multi-dispositivo ao vivo ----
 
   /**
@@ -309,6 +343,7 @@ export class SyncEngine {
       { table: "categories", filter: `user_id=eq.${userId}` },
       { table: "execution_logs", filter: `user_id=eq.${userId}` },
       { table: "profiles", filter: `id=eq.${userId}` },
+      { table: "reminders", filter: `user_id=eq.${userId}` },
     ];
     for (const { table, filter } of sources) {
       channel.on(
@@ -352,6 +387,10 @@ export class SyncEngine {
         if (change.eventType === "INSERT") {
           await this.applyExecutionLog(change.new as unknown as RemoteLog);
         }
+        break;
+      case "reminders":
+        if (isDelete) await this.removeLocal(localDB.reminders, change.old);
+        else await this.applyReminder(change.new as unknown as RemoteReminder);
         break;
     }
     await this.refreshPending();
@@ -461,15 +500,54 @@ export class SyncEngine {
     }
   }
 
+  private async pushReminders(): Promise<void> {
+    if (!this.db) return;
+    const rows = await localDB.reminders.where("_sync").equals(0).toArray();
+    for (const r of rows) {
+      const { error } = await this.db.from("reminders").upsert({
+        id: r.id,
+        user_id: r.userId,
+        goal_id: r.goalId,
+        time_local: r.timeLocal,
+        weekdays: r.weekdays,
+        active: r.active,
+      });
+      if (error) throw error;
+      await localDB.reminders.update(r.id, { _sync: 1 });
+    }
+  }
+
+  /** Subscriptions Web Push: só upload. Upsert por `endpoint` (idempotente por dispositivo). */
+  private async pushPushSubscriptions(): Promise<void> {
+    if (!this.db) return;
+    const rows = await localDB.pushSubscriptions.where("_sync").equals(0).toArray();
+    for (const s of rows) {
+      const { error } = await this.db.from("push_subscriptions").upsert(
+        {
+          user_id: s.userId,
+          endpoint: s.endpoint,
+          p256dh: s.p256dh,
+          auth: s.auth,
+          user_agent: s.userAgent,
+        },
+        { onConflict: "endpoint", ignoreDuplicates: false },
+      );
+      if (error) throw error;
+      await localDB.pushSubscriptions.update(s.id, { _sync: 1 });
+    }
+  }
+
   private async refreshPending(): Promise<void> {
-    const [g, l, t, c, p] = await Promise.all([
+    const [g, l, t, c, p, r, s] = await Promise.all([
       localDB.goals.where("_sync").equals(0).count(),
       localDB.executionLogs.where("_sync").equals(0).count(),
       localDB.tasks.where("_sync").equals(0).count(),
       localDB.categories.where("_sync").equals(0).count(),
       localDB.profiles.where("_sync").equals(0).count(),
+      localDB.reminders.where("_sync").equals(0).count(),
+      localDB.pushSubscriptions.where("_sync").equals(0).count(),
     ]);
-    this.patch({ pending: g + l + t + c + p });
+    this.patch({ pending: g + l + t + c + p + r + s });
   }
 
   private patch(partial: Partial<SyncStatus>): void {

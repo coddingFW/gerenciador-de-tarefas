@@ -2,6 +2,7 @@ import { useState } from "preact/hooks";
 import type { Category, Goal, GoalFrequency } from "@habit/core";
 import { container } from "../../../lib/container";
 import type { CurrentUser } from "../../../lib/auth";
+import { ReminderControl } from "../reminders/ReminderControl";
 
 const FREQUENCY_LABEL: Record<string, string> = {
   daily: "Diário",
@@ -24,6 +25,7 @@ export function GoalRow({
   onComplete: () => void;
 }) {
   const [editing, setEditing] = useState(false);
+  const [showReminder, setShowReminder] = useState(false);
 
   if (editing) {
     return <GoalEditor goal={goal} user={user} categories={categories} onClose={() => setEditing(false)} />;
@@ -35,7 +37,8 @@ export function GoalRow({
   };
 
   return (
-    <li class="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+    <li class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+      <div class="flex items-center justify-between">
       <div class="min-w-0">
         <p class={`truncate text-sm font-medium ${done ? "text-slate-400 line-through" : "text-slate-800"}`}>
           {goal.title}
@@ -46,6 +49,14 @@ export function GoalRow({
         </p>
       </div>
       <div class="ml-3 flex shrink-0 items-center gap-1">
+        <button
+          onClick={() => setShowReminder((v) => !v)}
+          aria-label="Lembrete do hábito"
+          aria-pressed={showReminder}
+          class="rounded-lg px-2 py-1.5 text-sm text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+        >
+          🔔
+        </button>
         <button
           onClick={() => setEditing(true)}
           aria-label="Editar hábito"
@@ -72,6 +83,10 @@ export function GoalRow({
           {done ? "✓ Feito" : "Concluir"}
         </button>
       </div>
+      </div>
+      {showReminder && (
+        <ReminderControl goal={goal} user={user} onClose={() => setShowReminder(false)} />
+      )}
     </li>
   );
 }

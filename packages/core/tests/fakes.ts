@@ -5,6 +5,7 @@ import type {
   ExecutionLog,
   Goal,
   IsoDate,
+  Reminder,
   Task,
 } from "../src/domain/entities/index.js";
 import type {
@@ -15,6 +16,7 @@ import type {
   IGoalRepository,
   IIdGenerator,
   IProfileRepository,
+  IReminderRepository,
   ITaskRepository,
 } from "../src/application/ports/index.js";
 
@@ -108,6 +110,22 @@ export class FakeProfileRepository implements IProfileRepository {
   async setTimezone(userId: string, timezone: string): Promise<void> {
     this.writes++;
     this.timezones.set(userId, timezone);
+  }
+}
+
+export class FakeReminderRepository implements IReminderRepository {
+  readonly store = new Map<string, Reminder>();
+  constructor(initial: Reminder[] = []) {
+    for (const r of initial) this.store.set(r.id, r);
+  }
+  async byId(id: string): Promise<Reminder | null> {
+    return this.store.get(id) ?? null;
+  }
+  async save(reminder: Reminder): Promise<void> {
+    this.store.set(reminder.id, reminder);
+  }
+  async listForUser(userId: string): Promise<Reminder[]> {
+    return [...this.store.values()].filter((r) => r.userId === userId);
   }
 }
 

@@ -11,6 +11,11 @@ export default defineConfig({
     // hasheados do build; o IndexedDB (Dexie) já cobre os dados offline. As
     // chamadas ao Supabase (outra origem) não são cacheadas — passam pela rede.
     VitePWA({
+      // injectManifest: SW custom (src/sw.ts) com handlers de Web Push, mantendo
+      // o precache do app-shell. Ver ADR-0004.
+      strategies: "injectManifest",
+      srcDir: "src",
+      filename: "sw.ts",
       registerType: "autoUpdate",
       injectRegister: "auto",
       includeAssets: ["icon.svg"],
@@ -29,9 +34,8 @@ export default defineConfig({
           { src: "icon.svg", sizes: "any", type: "image/svg+xml", purpose: "maskable" },
         ],
       },
-      workbox: {
+      injectManifest: {
         globPatterns: ["**/*.{js,css,html,svg,woff2}"],
-        navigateFallback: "/index.html",
       },
       // Habilita o SW também em dev para validação local.
       devOptions: { enabled: true, type: "module" },

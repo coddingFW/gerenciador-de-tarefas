@@ -1,5 +1,6 @@
 import {
   ArchiveGoal,
+  CancelReminder,
   CompleteTask,
   CreateCategory,
   CreateGoal,
@@ -9,6 +10,7 @@ import {
   LogExecution,
   ReopenTask,
   ReorderCategories,
+  ScheduleReminder,
   SyncUserTimezone,
 } from "@habit/core";
 import { SystemClock } from "../infrastructure/adapters/SystemClock";
@@ -19,6 +21,7 @@ import {
   LocalExecutionLogRepository,
   LocalGoalRepository,
   LocalProfileRepository,
+  LocalReminderRepository,
   LocalTaskRepository,
 } from "../infrastructure/persistence/LocalRepositories";
 import { SyncEngine } from "../infrastructure/sync/SyncEngine";
@@ -38,6 +41,7 @@ const tasks = new LocalTaskRepository();
 const categories = new LocalCategoryRepository();
 const logs = new LocalExecutionLogRepository();
 const profiles = new LocalProfileRepository();
+const reminders = new LocalReminderRepository();
 
 export const container = {
   createGoal: new CreateGoal(goals, bus, clock, ids),
@@ -51,6 +55,9 @@ export const container = {
   editCategory: new EditCategory(categories, bus),
   reorderCategories: new ReorderCategories(categories, bus),
   syncUserTimezone: new SyncUserTimezone(profiles),
+  scheduleReminder: new ScheduleReminder(reminders, bus, clock, ids),
+  cancelReminder: new CancelReminder(reminders, bus),
+  reminders,
   sync: new SyncEngine(supabase),
   clock,
 };

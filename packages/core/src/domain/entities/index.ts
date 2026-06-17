@@ -9,6 +9,9 @@ export type GoalFrequency = "daily" | "weekly" | "monthly";
 export type TaskStatus = "pending" | "done" | "skipped";
 export type ExecutionSource = "manual" | "timer" | "import";
 
+/** Dia da semana no padrão ISO-8601: 1 = segunda … 7 = domingo (casa com `extract(isodow)`). */
+export type Weekday = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+
 /** ISO date `YYYY-MM-DD` (dia no fuso do usuário). */
 export type IsoDate = string;
 
@@ -58,6 +61,22 @@ export interface Task {
   status: TaskStatus;
   estimatedMinutes: number | null;
   completedAt: string | null;
+}
+
+/**
+ * Lembrete recorrente de um hábito (Fase 2). Recorrência simples: um horário
+ * local (`HH:MM`, no fuso do usuário) em um conjunto de dias da semana.
+ */
+export interface Reminder {
+  id: string;
+  userId: string;
+  goalId: string;
+  /** Horário local `HH:MM` (24h) no fuso do usuário. */
+  timeLocal: string;
+  /** Dias da semana (ISO-DOW 1..7) em que dispara. */
+  weekdays: Weekday[];
+  active: boolean;
+  createdAt: string;
 }
 
 /** Fato imutável (append-only) — base de todas as métricas. */

@@ -15,6 +15,8 @@ export type DomainEventType =
   | "GoalUpdated"
   | "GoalArchived"
   | "GoalAchieved"
+  | "ReminderScheduled"
+  | "ReminderCancelled"
   | "ExecutionLogged"
   | "StreakStarted"
   | "StreakExtended"

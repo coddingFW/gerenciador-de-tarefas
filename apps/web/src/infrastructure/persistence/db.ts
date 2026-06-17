@@ -1,5 +1,5 @@
 import Dexie, { type Table } from "dexie";
-import type { Category, ExecutionLog, Goal, Task } from "@habit/core";
+import type { Category, ExecutionLog, Goal, Reminder, Task } from "@habit/core";
 
 /**
  * Estado de sincronização de cada registro local (Fase 1 §8).
@@ -14,6 +14,17 @@ export type StoredCategory = Category & { _sync: SyncState };
 export type StoredExecutionLog = ExecutionLog & { id: string; _sync: SyncState };
 /** Espelho local mínimo do profile — hoje só o fuso (fonte da verdade do cálculo). */
 export type StoredProfile = { id: string; timezone: string; _sync: SyncState };
+export type StoredReminder = Reminder & { _sync: SyncState };
+/** Subscription Web Push do dispositivo — só upload (o servidor é o consumidor). */
+export type StoredPushSubscription = {
+  id: string;
+  userId: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  userAgent: string | null;
+  _sync: SyncState;
+};
 
 export class LocalDB extends Dexie {
   goals!: Table<StoredGoal, string>;
@@ -21,6 +32,8 @@ export class LocalDB extends Dexie {
   categories!: Table<StoredCategory, string>;
   executionLogs!: Table<StoredExecutionLog, string>;
   profiles!: Table<StoredProfile, string>;
+  reminders!: Table<StoredReminder, string>;
+  pushSubscriptions!: Table<StoredPushSubscription, string>;
 
   constructor() {
     super("habit-tracker");
@@ -34,6 +47,11 @@ export class LocalDB extends Dexie {
     this.version(2).stores({
       categories: "id, userId, sortOrder, _sync",
       profiles: "id, _sync",
+    });
+    // v3: lembretes (Fase 2) e subscriptions de Web Push. Aditivo.
+    this.version(3).stores({
+      reminders: "id, userId, goalId, active, _sync",
+      pushSubscriptions: "id, userId, endpoint, _sync",
     });
   }
 }
