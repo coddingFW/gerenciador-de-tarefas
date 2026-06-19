@@ -5,6 +5,7 @@ import { container } from "./container";
 export interface CurrentUser {
   id: string;
   name: string;
+  avatarUrl: string | null;
   timezone: string;
 }
 
@@ -19,13 +20,19 @@ function browserTimezone(): string {
 }
 
 /** Identidade do usuário de demonstração (modo local-first), estável entre sessões. */
-function demoIdentity(): { id: string; name: string } {
+function demoIdentity(): Identity {
   let id = localStorage.getItem(DEMO_KEY);
   if (!id) {
     id = crypto.randomUUID();
     localStorage.setItem(DEMO_KEY, id);
   }
-  return { id, name: "Você (demo)" };
+  return { id, name: "Você (demo)", avatarUrl: null };
+}
+
+interface Identity {
+  id: string;
+  name: string;
+  avatarUrl: string | null;
 }
 
 /**
@@ -33,7 +40,7 @@ function demoIdentity(): { id: string; name: string } {
  * por mudança) e devolve o `CurrentUser` com o fuso efetivo — fonte da verdade
  * dos cálculos de data (streak/score), inclusive no servidor. Idempotente.
  */
-async function resolveUser(base: { id: string; name: string }): Promise<CurrentUser> {
+async function resolveUser(base: Identity): Promise<CurrentUser> {
   let timezone = browserTimezone();
   try {
     timezone = await container.syncUserTimezone.execute({
@@ -46,7 +53,7 @@ async function resolveUser(base: { id: string; name: string }): Promise<CurrentU
   } catch {
     // Falha ao persistir não bloqueia o login: segue com o fuso do navegador.
   }
-  return { ...base, name: base.name, timezone };
+  return { ...base, timezone };
 }
 
 export interface AuthState {
@@ -102,9 +109,10 @@ export function useAuth(): AuthState {
 
 function mapIdentity(
   u: { id: string; user_metadata?: Record<string, unknown> } | undefined | null,
-): { id: string; name: string } | null {
+): Identity | null {
   if (!u) return null;
   const meta = u.user_metadata ?? {};
   const name = (meta.full_name as string) || (meta.name as string) || "Usuário";
-  return { id: u.id, name };
+  const avatarUrl = (meta.avatar_url as string) || (meta.picture as string) || null;
+  return { id: u.id, name, avatarUrl };
 }

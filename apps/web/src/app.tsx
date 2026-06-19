@@ -1,12 +1,16 @@
 import { useState } from "preact/hooks";
+import { useLiveQuery } from "dexie-react-hooks";
 import { useAuth } from "./lib/auth";
 import { useTheme } from "./lib/useTheme";
+import { localDB } from "./infrastructure/persistence/db";
 import { SyncBadge } from "./ui/components/SyncBadge";
 import { ThemeToggle } from "./ui/components/ThemeToggle";
+import { Avatar } from "./ui/components/Avatar";
 import { TodayPage } from "./ui/features/today/TodayPage";
 import { TasksPage } from "./ui/features/tasks/TasksPage";
 import { CategoriesPage } from "./ui/features/categories/CategoriesPage";
 import { DashboardPage } from "./ui/features/dashboard/DashboardPage";
+import { ProfilePage } from "./ui/features/profile/ProfilePage";
 
 type Tab = "today" | "tasks" | "categories" | "dashboard";
 
@@ -14,6 +18,8 @@ export function App() {
   const { user, loading, backend, signInWithGoogle, signOut } = useAuth();
   const { theme, setTheme } = useTheme(user?.id);
   const [tab, setTab] = useState<Tab>("today");
+  const [showProfile, setShowProfile] = useState(false);
+  const profile = useLiveQuery(() => (user ? localDB.profiles.get(user.id) : undefined), [user?.id]);
 
   if (loading) {
     return <Centered>Carregando…</Centered>;
@@ -36,6 +42,8 @@ export function App() {
     );
   }
 
+  const avatarUrl = profile?.avatarUrl ?? user.avatarUrl;
+
   return (
     <div class="mx-auto flex min-h-full max-w-xl flex-col">
       <header class="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
@@ -54,30 +62,41 @@ export function App() {
               Sair
             </button>
           )}
+          <button onClick={() => setShowProfile(true)} aria-label="Abrir perfil" class="rounded-full">
+            <Avatar name={user.name} avatarUrl={avatarUrl} size={28} />
+          </button>
         </div>
       </header>
 
-      <nav class="flex gap-1 overflow-x-auto px-4 pt-3">
-        <TabButton active={tab === "today"} onClick={() => setTab("today")}>
-          Hoje
-        </TabButton>
-        <TabButton active={tab === "tasks"} onClick={() => setTab("tasks")}>
-          Tarefas
-        </TabButton>
-        <TabButton active={tab === "categories"} onClick={() => setTab("categories")}>
-          Categorias
-        </TabButton>
-        <TabButton active={tab === "dashboard"} onClick={() => setTab("dashboard")}>
-          Painel
-        </TabButton>
-      </nav>
+      {showProfile ? (
+        <main class="flex-1 p-4">
+          <ProfilePage user={user} theme={theme} setTheme={setTheme} onBack={() => setShowProfile(false)} />
+        </main>
+      ) : (
+        <>
+          <nav class="flex gap-1 overflow-x-auto px-4 pt-3">
+            <TabButton active={tab === "today"} onClick={() => setTab("today")}>
+              Hoje
+            </TabButton>
+            <TabButton active={tab === "tasks"} onClick={() => setTab("tasks")}>
+              Tarefas
+            </TabButton>
+            <TabButton active={tab === "categories"} onClick={() => setTab("categories")}>
+              Categorias
+            </TabButton>
+            <TabButton active={tab === "dashboard"} onClick={() => setTab("dashboard")}>
+              Painel
+            </TabButton>
+          </nav>
 
-      <main class="flex-1 p-4">
-        {tab === "today" && <TodayPage user={user} />}
-        {tab === "tasks" && <TasksPage user={user} />}
-        {tab === "categories" && <CategoriesPage user={user} />}
-        {tab === "dashboard" && <DashboardPage user={user} />}
-      </main>
+          <main class="flex-1 p-4">
+            {tab === "today" && <TodayPage user={user} />}
+            {tab === "tasks" && <TasksPage user={user} />}
+            {tab === "categories" && <CategoriesPage user={user} />}
+            {tab === "dashboard" && <DashboardPage user={user} />}
+          </main>
+        </>
+      )}
     </div>
   );
 }
