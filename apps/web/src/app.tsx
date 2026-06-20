@@ -38,6 +38,15 @@ export function App() {
           >
             Entrar com Google
           </button>
+          <button
+            onClick={() => void signInWithGoogle()}
+            class="mt-2 w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+          >
+            Criar conta com Google
+          </button>
+          <p class="mt-3 text-xs text-slate-400 dark:text-slate-500">
+            É grátis — sua conta é criada automaticamente no primeiro acesso.
+          </p>
         </div>
       </Centered>
     );

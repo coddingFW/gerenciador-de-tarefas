@@ -57,7 +57,7 @@ export function AddGoalForm({ user, categories }: { user: CurrentUser; categorie
           type="number"
           min="0"
           placeholder="min"
-          class="w-20 rounded-lg border border-slate-300 px-3 py-2 text-sm"
+          class="w-20 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
         />
         <button
           type="submit"
