@@ -1,6 +1,6 @@
 import { useState } from "preact/hooks";
 import { useLiveQuery } from "dexie-react-hooks";
-import type { IsoDate, Task } from "@habit/core";
+import type { Goal, IsoDate, Task } from "@habit/core";
 import { localDB } from "../../../infrastructure/persistence/db";
 import { container } from "../../../lib/container";
 import type { CurrentUser } from "../../../lib/auth";
@@ -55,6 +55,12 @@ export function CalendarPage({ user }: { user: CurrentUser }) {
       [user.id],
     ) ?? [];
 
+  const goals =
+    useLiveQuery(
+      () => localDB.goals.where("userId").equals(user.id).filter((g) => g.active).toArray(),
+      [user.id],
+    ) ?? [];
+
   const tasksByDate = new Map<string, Task[]>();
   for (const t of tasks) {
     if (!t.dueDate) continue;
@@ -63,7 +69,15 @@ export function CalendarPage({ user }: { user: CurrentUser }) {
     tasksByDate.set(t.dueDate, list);
   }
   const habitByDate = new Map<string, number>();
-  for (const l of logs) habitByDate.set(l.occurredOn, (habitByDate.get(l.occurredOn) ?? 0) + 1);
+  const doneHabitsByDate = new Map<string, Set<string>>();
+  for (const l of logs) {
+    habitByDate.set(l.occurredOn, (habitByDate.get(l.occurredOn) ?? 0) + 1);
+    if (l.goalId) {
+      const set = doneHabitsByDate.get(l.occurredOn) ?? new Set<string>();
+      set.add(l.goalId);
+      doneHabitsByDate.set(l.occurredOn, set);
+    }
+  }
 
   return (
     <div class="flex flex-col gap-4">
@@ -85,6 +99,8 @@ export function CalendarPage({ user }: { user: CurrentUser }) {
           setSelected={setSelected}
           tasksByDate={tasksByDate}
           habitByDate={habitByDate}
+          doneHabitsByDate={doneHabitsByDate}
+          goals={goals}
           user={user}
         />
       ) : (
@@ -102,6 +118,8 @@ function MonthView({
   setSelected,
   tasksByDate,
   habitByDate,
+  doneHabitsByDate,
+  goals,
   user,
 }: {
   view: { y: number; m: number };
@@ -111,6 +129,8 @@ function MonthView({
   setSelected: (d: IsoDate) => void;
   tasksByDate: Map<string, Task[]>;
   habitByDate: Map<string, number>;
+  doneHabitsByDate: Map<string, Set<string>>;
+  goals: Goal[];
   user: CurrentUser;
 }) {
   const dim = daysInMonth(view.y, view.m);
@@ -199,6 +219,8 @@ function MonthView({
       <DayDetail
         selected={selected}
         tasks={tasksByDate.get(selected) ?? []}
+        goals={goals}
+        doneHabits={doneHabitsByDate.get(selected) ?? new Set<string>()}
         user={user}
         today={today}
       />
@@ -209,20 +231,33 @@ function MonthView({
 function DayDetail({
   selected,
   tasks,
+  goals,
+  doneHabits,
   user,
   today,
 }: {
   selected: IsoDate;
   tasks: Task[];
+  goals: Goal[];
+  doneHabits: Set<string>;
   user: CurrentUser;
   today: IsoDate;
 }) {
+  const isToday = selected === today;
+  // Hoje: todos os hábitos ativos (concluíveis). Outros dias: só os concluídos
+  // naquele dia (read-only — o domínio registra execução para "hoje").
+  const habitRows = isToday
+    ? goals.map((g) => ({ goal: g, done: doneHabits.has(g.id) }))
+    : goals.filter((g) => doneHabits.has(g.id)).map((g) => ({ goal: g, done: true }));
+
   return (
     <div class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <h3 class="mb-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
         {dayLabel(selected)}
-        {selected === today ? " · hoje" : ""}
+        {isToday ? " · hoje" : ""}
       </h3>
+
+      <p class="mb-1 text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">Tarefas</p>
       {tasks.length === 0 ? (
         <p class="text-sm text-slate-500 dark:text-slate-400">Sem tarefas neste dia.</p>
       ) : (
@@ -233,7 +268,63 @@ function DayDetail({
         </ul>
       )}
       <AddOnDay user={user} date={selected} />
+
+      {habitRows.length > 0 && (
+        <div class="mt-4">
+          <p class="mb-1 text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">Hábitos</p>
+          <ul class="flex flex-col gap-2">
+            {habitRows.map(({ goal, done }) => (
+              <HabitItem key={goal.id} goal={goal} done={done} canComplete={isToday} user={user} />
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
+  );
+}
+
+function HabitItem({
+  goal,
+  done,
+  canComplete,
+  user,
+}: {
+  goal: Goal;
+  done: boolean;
+  canComplete: boolean;
+  user: CurrentUser;
+}) {
+  const complete = async () => {
+    await container.logExecution.execute({
+      goalId: goal.id,
+      userId: user.id,
+      timezone: user.timezone,
+      clientEventId: crypto.randomUUID(),
+    });
+    void container.sync.flush();
+  };
+  return (
+    <li class="flex items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <p
+        class={`min-w-0 truncate text-sm font-medium ${
+          done ? "text-slate-400 line-through dark:text-slate-500" : "text-slate-800 dark:text-slate-100"
+        }`}
+      >
+        {goal.title}
+      </p>
+      {done ? (
+        <span class="shrink-0 text-xs font-medium text-emerald-600 dark:text-emerald-400">✓ feito</span>
+      ) : canComplete ? (
+        <button
+          onClick={() => void complete()}
+          class="shrink-0 rounded-lg bg-brand px-2.5 py-1.5 text-xs font-medium text-white hover:bg-brand-dark"
+        >
+          Concluir
+        </button>
+      ) : (
+        <span class="shrink-0 text-xs text-slate-400 dark:text-slate-500">—</span>
+      )}
+    </li>
   );
 }
 
