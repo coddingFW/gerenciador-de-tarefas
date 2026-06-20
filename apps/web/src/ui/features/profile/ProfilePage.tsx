@@ -4,6 +4,8 @@ import type { Theme } from "@habit/core";
 import { localDB } from "../../../infrastructure/persistence/db";
 import { container } from "../../../lib/container";
 import { uploadAvatar } from "../../../infrastructure/storage/avatarStorage";
+import { supabase } from "../../../infrastructure/supabase/client";
+import { exportUserDataJson } from "../../../lib/exportData";
 import type { CurrentUser } from "../../../lib/auth";
 import { Avatar } from "../../components/Avatar";
 
@@ -31,6 +33,29 @@ export function ProfilePage({
   const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [delError, setDelError] = useState<string | null>(null);
+
+  const onExport = () => void exportUserDataJson(user.id);
+
+  const onDelete = async () => {
+    setDeleting(true);
+    setDelError(null);
+    try {
+      if (supabase) {
+        const { error: fnError } = await supabase.functions.invoke("delete-account", { method: "POST" });
+        if (fnError) throw fnError;
+        await supabase.auth.signOut();
+      }
+      await localDB.delete();
+      localStorage.clear();
+      window.location.reload();
+    } catch {
+      setDelError("Não foi possível excluir a conta. Tente novamente.");
+      setDeleting(false);
+    }
+  };
 
   const onPick = async (e: Event) => {
     const file = (e.target as HTMLInputElement).files?.[0];
@@ -110,6 +135,50 @@ export function ProfilePage({
             <dd class="text-slate-800 dark:text-slate-200">{user.timezone}</dd>
           </div>
         </dl>
+      </section>
+
+      <section class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <h3 class="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">Privacidade</h3>
+        <button
+          onClick={onExport}
+          class="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+        >
+          Exportar meus dados (JSON)
+        </button>
+
+        <div class="mt-4 border-t border-slate-200 pt-4 dark:border-slate-800">
+          {!confirmDelete ? (
+            <button
+              onClick={() => setConfirmDelete(true)}
+              class="w-full rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950"
+            >
+              Excluir conta
+            </button>
+          ) : (
+            <div class="flex flex-col gap-2">
+              <p class="text-sm text-red-600 dark:text-red-400">
+                Isto apaga <b>todos</b> os seus dados e é irreversível.
+              </p>
+              <div class="flex gap-2">
+                <button
+                  onClick={() => void onDelete()}
+                  disabled={deleting}
+                  class="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-60"
+                >
+                  {deleting ? "Excluindo…" : "Confirmar exclusão"}
+                </button>
+                <button
+                  onClick={() => setConfirmDelete(false)}
+                  disabled={deleting}
+                  class="rounded-lg px-4 py-2 text-sm font-medium text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          )}
+          {delError && <p class="mt-2 text-xs text-red-600 dark:text-red-400">{delError}</p>}
+        </div>
       </section>
     </div>
   );

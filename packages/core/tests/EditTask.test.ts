@@ -56,6 +56,20 @@ describe("EditTask", () => {
     ).rejects.toThrow("TASK_DUE_DATE_INVALID");
   });
 
+  it("atualiza estimatedMinutes", async () => {
+    const t = await useCase.execute({ taskId: "t1", userId: "u1", estimatedMinutes: 30 });
+    expect(t.estimatedMinutes).toBe(30);
+    expect(bus.types()).toEqual(["TaskUpdated"]);
+  });
+
+  it("aceita estimatedMinutes null e rejeita negativo", async () => {
+    const t = await useCase.execute({ taskId: "t1", userId: "u1", estimatedMinutes: null });
+    expect(t.estimatedMinutes).toBeNull();
+    await expect(
+      useCase.execute({ taskId: "t1", userId: "u1", estimatedMinutes: -5 }),
+    ).rejects.toThrow("TASK_MINUTES_INVALID");
+  });
+
   it("no-op sem campos (não publica evento)", async () => {
     await useCase.execute({ taskId: "t1", userId: "u1" });
     expect(bus.types()).toEqual([]);

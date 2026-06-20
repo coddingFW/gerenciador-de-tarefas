@@ -28,3 +28,8 @@ verify_jwt = false
 # admin-api valida o JWT do usuário e a role admin internamente (acesso do browser).
 [functions.admin-api]
 verify_jwt = false
+
+# delete-account é chamada pelo PRÓPRIO usuário: o gateway valida o JWT e a função
+# identifica o userId pelo token (só pode excluir a si mesmo).
+[functions.delete-account]
+verify_jwt = true
