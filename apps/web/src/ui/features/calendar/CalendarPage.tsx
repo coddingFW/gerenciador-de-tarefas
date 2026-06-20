@@ -16,13 +16,7 @@ import {
   parseIso,
 } from "./dateUtils";
 
-const HEAT = [
-  "",
-  "bg-emerald-100 dark:bg-emerald-900/40",
-  "bg-emerald-200 dark:bg-emerald-800/50",
-  "bg-emerald-300 dark:bg-emerald-700/60",
-];
-const heatLevel = (n: number): number => (n <= 0 ? 0 : n <= 2 ? 1 : n <= 4 ? 2 : 3);
+const MAX_DOTS = 4;
 
 /** Aba Calendário (Fase: calendário). Lê tarefas (dueDate) e execuções de hábitos
  *  (occurredOn) do Dexie — offline-first, sem migration. Datas no fuso do usuário. */
@@ -68,10 +62,8 @@ export function CalendarPage({ user }: { user: CurrentUser }) {
     list.push(t);
     tasksByDate.set(t.dueDate, list);
   }
-  const habitByDate = new Map<string, number>();
   const doneHabitsByDate = new Map<string, Set<string>>();
   for (const l of logs) {
-    habitByDate.set(l.occurredOn, (habitByDate.get(l.occurredOn) ?? 0) + 1);
     if (l.goalId) {
       const set = doneHabitsByDate.get(l.occurredOn) ?? new Set<string>();
       set.add(l.goalId);
@@ -98,7 +90,6 @@ export function CalendarPage({ user }: { user: CurrentUser }) {
           selected={selected}
           setSelected={setSelected}
           tasksByDate={tasksByDate}
-          habitByDate={habitByDate}
           doneHabitsByDate={doneHabitsByDate}
           goals={goals}
           user={user}
@@ -117,7 +108,6 @@ function MonthView({
   selected,
   setSelected,
   tasksByDate,
-  habitByDate,
   doneHabitsByDate,
   goals,
   user,
@@ -128,7 +118,6 @@ function MonthView({
   selected: IsoDate;
   setSelected: (d: IsoDate) => void;
   tasksByDate: Map<string, Task[]>;
-  habitByDate: Map<string, number>;
   doneHabitsByDate: Map<string, Set<string>>;
   goals: Goal[];
   user: CurrentUser;
@@ -183,18 +172,20 @@ function MonthView({
           if (d === null) return <div key={`e${i}`} />;
           const dIso = iso(view.y, view.m, d);
           const dayTasks = tasksByDate.get(dIso) ?? [];
-          const level = heatLevel(habitByDate.get(dIso) ?? 0);
+          const doneCount = dayTasks.filter((t) => t.status === "done").length;
           const isToday = dIso === today;
           const isSel = dIso === selected;
           const overdue = dIso < today && dayTasks.some((t) => t.status === "pending");
           const base = isSel
             ? "bg-brand text-white"
-            : `${HEAT[level]} ${overdue ? "font-medium text-red-600 dark:text-red-400" : "text-slate-600 dark:text-slate-300"}`;
+            : overdue
+              ? "font-medium text-red-600 dark:text-red-400"
+              : "text-slate-600 dark:text-slate-300";
           return (
             <button
               key={dIso}
               onClick={() => setSelected(dIso)}
-              aria-label={dayLabel(dIso)}
+              aria-label={`${dayLabel(dIso)}${doneCount > 0 ? ` — ${doneCount} tarefa(s) concluída(s)` : ""}`}
               aria-pressed={isSel}
               class={`flex aspect-square flex-col items-center justify-center gap-1 rounded-lg text-sm ${base} ${
                 isToday && !isSel ? "ring-2 ring-brand" : ""
@@ -202,12 +193,10 @@ function MonthView({
             >
               <span>{d}</span>
               <span class="flex h-1.5 items-center gap-0.5">
-                {dayTasks.slice(0, 3).map((t, j) => (
+                {Array.from({ length: Math.min(doneCount, MAX_DOTS) }).map((_, j) => (
                   <span
                     key={j}
-                    class={`h-1.5 w-1.5 rounded-full ${
-                      isSel ? "bg-white" : t.status === "done" ? "bg-emerald-500" : "bg-brand"
-                    }`}
+                    class={`h-1.5 w-1.5 rounded-full ${isSel ? "bg-white" : "bg-emerald-500"}`}
                   />
                 ))}
               </span>
