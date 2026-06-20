@@ -11,6 +11,7 @@ export type DomainEventType =
   | "TaskCompleted"
   | "TaskSkipped"
   | "TaskArchived"
+  | "TaskUpdated"
   | "CategoryCreated"
   | "CategoryUpdated"
   | "GoalCreated"

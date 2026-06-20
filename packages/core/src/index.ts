@@ -31,6 +31,8 @@ export { ReopenTask } from "./application/use-cases/ReopenTask.js";
 export type { ReopenTaskInput } from "./application/use-cases/ReopenTask.js";
 export { ArchiveTask } from "./application/use-cases/ArchiveTask.js";
 export type { ArchiveTaskInput } from "./application/use-cases/ArchiveTask.js";
+export { EditTask } from "./application/use-cases/EditTask.js";
+export type { EditTaskInput } from "./application/use-cases/EditTask.js";
 export { CreateCategory } from "./application/use-cases/CreateCategory.js";
 export type { CreateCategoryInput } from "./application/use-cases/CreateCategory.js";
 export { EditCategory } from "./application/use-cases/EditCategory.js";

@@ -8,11 +8,12 @@ import { ThemeToggle } from "./ui/components/ThemeToggle";
 import { Avatar } from "./ui/components/Avatar";
 import { TodayPage } from "./ui/features/today/TodayPage";
 import { TasksPage } from "./ui/features/tasks/TasksPage";
+import { CalendarPage } from "./ui/features/calendar/CalendarPage";
 import { CategoriesPage } from "./ui/features/categories/CategoriesPage";
 import { DashboardPage } from "./ui/features/dashboard/DashboardPage";
 import { ProfilePage } from "./ui/features/profile/ProfilePage";
 
-type Tab = "today" | "tasks" | "categories" | "dashboard";
+type Tab = "today" | "tasks" | "calendar" | "categories" | "dashboard";
 
 export function App() {
   const { user, loading, backend, signInWithGoogle, signOut } = useAuth();
@@ -81,6 +82,9 @@ export function App() {
             <TabButton active={tab === "tasks"} onClick={() => setTab("tasks")}>
               Tarefas
             </TabButton>
+            <TabButton active={tab === "calendar"} onClick={() => setTab("calendar")}>
+              Calendário
+            </TabButton>
             <TabButton active={tab === "categories"} onClick={() => setTab("categories")}>
               Categorias
             </TabButton>
@@ -92,6 +96,7 @@ export function App() {
           <main class="flex-1 p-4">
             {tab === "today" && <TodayPage user={user} />}
             {tab === "tasks" && <TasksPage user={user} />}
+            {tab === "calendar" && <CalendarPage user={user} />}
             {tab === "categories" && <CategoriesPage user={user} />}
             {tab === "dashboard" && <DashboardPage user={user} />}
           </main>
