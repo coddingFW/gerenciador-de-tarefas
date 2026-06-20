@@ -40,6 +40,9 @@ export function TodayPage({ user }: { user: CurrentUser }) {
     ) ?? [];
 
   const doneGoalIds = new Set(doneToday.map((l) => l.goalId));
+  // Conta só os hábitos EXIBIDOS concluídos hoje — ignora logs de tarefas avulsas
+  // (goalId null) e de hábitos arquivados, que não estão na lista.
+  const doneCount = goals.filter((g) => doneGoalIds.has(g.id)).length;
 
   const complete = async (goalId: string) => {
     await container.logExecution.execute({
@@ -61,7 +64,7 @@ export function TodayPage({ user }: { user: CurrentUser }) {
         <div class="mb-2 flex items-baseline justify-between">
           <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Hoje</h2>
           <span class="text-xs text-slate-500 dark:text-slate-400">
-            {doneGoalIds.size}/{goals.length} concluídos
+            {doneCount}/{goals.length} concluídos
           </span>
         </div>
 
