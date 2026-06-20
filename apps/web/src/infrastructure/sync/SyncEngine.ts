@@ -55,6 +55,7 @@ interface RemoteTask {
   status: TaskStatus;
   estimated_minutes: number | null;
   completed_at: string | null;
+  archived_at: string | null;
 }
 interface RemoteLog {
   id: string;
@@ -297,6 +298,7 @@ export class SyncEngine {
       status: r.status,
       estimatedMinutes: r.estimated_minutes,
       completedAt: r.completed_at,
+      archivedAt: r.archived_at,
       _sync: 1,
     });
   }
@@ -508,6 +510,7 @@ export class SyncEngine {
         status: t.status,
         estimated_minutes: t.estimatedMinutes,
         completed_at: t.completedAt,
+        archived_at: t.archivedAt,
       });
       if (error) throw error;
       await localDB.tasks.update(t.id, { _sync: 1 });

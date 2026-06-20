@@ -1,5 +1,6 @@
 import {
   ArchiveGoal,
+  ArchiveTask,
   CancelReminder,
   CompleteTask,
   CreateCategory,
@@ -52,6 +53,7 @@ export const container = {
   completeTask: new CompleteTask(tasks, logs, bus, clock),
   createTask: new CreateTask(tasks, bus, ids),
   reopenTask: new ReopenTask(tasks),
+  archiveTask: new ArchiveTask(tasks, bus, clock),
   createCategory: new CreateCategory(categories, bus, ids),
   editCategory: new EditCategory(categories, bus),
   reorderCategories: new ReorderCategories(categories, bus),

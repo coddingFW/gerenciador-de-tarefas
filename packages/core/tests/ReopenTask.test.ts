@@ -13,6 +13,7 @@ const task = (over: Partial<Task> = {}): Task => ({
   status: "done",
   estimatedMinutes: null,
   completedAt: "2026-06-11T10:00:00.000Z",
+  archivedAt: null,
   ...over,
 });
 

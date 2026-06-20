@@ -57,7 +57,7 @@ export class LocalTaskRepository implements ITaskRepository {
     const rows = await localDB.tasks
       .where("userId")
       .equals(userId)
-      .filter((t) => t.status === "pending" && t.dueDate === date)
+      .filter((t) => t.status === "pending" && t.dueDate === date && !t.archivedAt)
       .toArray();
     return rows.map(stripTask);
   }

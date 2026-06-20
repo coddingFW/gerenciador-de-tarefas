@@ -39,6 +39,7 @@ export class CreateTask {
       status: "pending",
       estimatedMinutes: input.estimatedMinutes ?? null,
       completedAt: null,
+      archivedAt: null,
     };
 
     await this.tasks.save(task);

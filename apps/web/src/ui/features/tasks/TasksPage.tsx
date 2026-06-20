@@ -21,8 +21,8 @@ export function TasksPage({ user }: { user: CurrentUser }) {
     [user.id],
   );
 
-  const pending = tasks?.filter((t) => t.status === "pending") ?? [];
-  const done = tasks?.filter((t) => t.status === "done") ?? [];
+  const pending = tasks?.filter((t) => t.status === "pending" && !t.archivedAt) ?? [];
+  const done = tasks?.filter((t) => t.status === "done" && !t.archivedAt) ?? [];
 
   return (
     <div class="flex flex-col gap-4">
@@ -122,26 +122,40 @@ function TaskRow({ task, user }: { task: Task; user: CurrentUser }) {
     void container.sync.flush();
   };
 
+  const remove = async () => {
+    await container.archiveTask.execute({ taskId: task.id, userId: user.id });
+    void container.sync.flush();
+  };
+
   return (
     <li class="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <p class={`min-w-0 truncate text-sm font-medium ${done ? "text-slate-400 line-through dark:text-slate-500" : "text-slate-800 dark:text-slate-100"}`}>
         {task.title}
       </p>
-      {done ? (
+      <div class="ml-3 flex shrink-0 items-center gap-1">
+        {done ? (
+          <button
+            onClick={() => void undo()}
+            class="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+          >
+            Desfazer
+          </button>
+        ) : (
+          <button
+            onClick={() => void complete()}
+            class="rounded-lg bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-dark"
+          >
+            Concluir
+          </button>
+        )}
         <button
-          onClick={() => void undo()}
-          class="ml-3 shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+          onClick={() => void remove()}
+          aria-label="Excluir tarefa"
+          class="rounded-lg px-2 py-1.5 text-sm text-slate-400 hover:bg-slate-100 hover:text-red-600 dark:hover:bg-slate-800"
         >
-          Desfazer
+          🗑
         </button>
-      ) : (
-        <button
-          onClick={() => void complete()}
-          class="ml-3 shrink-0 rounded-lg bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-dark"
-        >
-          Concluir
-        </button>
-      )}
+      </div>
     </li>
   );
 }

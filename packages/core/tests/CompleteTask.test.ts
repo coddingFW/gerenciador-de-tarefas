@@ -18,6 +18,7 @@ const makeTask = (over: Partial<Task> = {}): Task => ({
   status: "pending",
   estimatedMinutes: 30,
   completedAt: null,
+  archivedAt: null,
   ...over,
 });
 

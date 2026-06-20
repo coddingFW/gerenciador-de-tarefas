@@ -64,6 +64,7 @@ export interface Task {
   status: TaskStatus;
   estimatedMinutes: number | null;
   completedAt: string | null;
+  archivedAt: string | null;
 }
 
 /**
