@@ -133,6 +133,55 @@ describe("SyncEngine.pull", () => {
     expect(goal?._sync).toBe(0);
   });
 
+  it("remove log local já sincronizado que sumiu do servidor (limpeza); preserva pendente", async () => {
+    // Sincronizado e ausente do servidor → deve ser removido.
+    await localDB.executionLogs.put({
+      id: "stale",
+      userId: "u1",
+      goalId: "g1",
+      taskId: null,
+      occurredOn: "2026-06-16",
+      minutesSpent: 0,
+      source: "manual",
+      clientEventId: "ce-stale",
+      _sync: 1,
+    });
+    // Pendente (ainda não subiu) e ausente do servidor → deve ser preservado.
+    await localDB.executionLogs.put({
+      id: "pending",
+      userId: "u1",
+      goalId: "g1",
+      taskId: null,
+      occurredOn: "2026-06-20",
+      minutesSpent: 0,
+      source: "manual",
+      clientEventId: "ce-pending",
+      _sync: 0,
+    });
+
+    const remote = {
+      execution_logs: [
+        {
+          id: "kept",
+          user_id: "u1",
+          goal_id: "g1",
+          task_id: null,
+          occurred_on: "2026-06-20",
+          minutes_spent: 0,
+          source: "manual",
+          client_event_id: "ce-kept",
+        },
+      ],
+    };
+
+    await new SyncEngine(fakeSupabase(remote)).pull();
+
+    expect(await localDB.executionLogs.get("stale")).toBeUndefined();
+    expect(await localDB.executionLogs.get("pending")).toBeDefined();
+    const kept = (await localDB.executionLogs.toArray()).find((l) => l.clientEventId === "ce-kept");
+    expect(kept).toBeDefined();
+  });
+
   it("deduplica execution_logs por (userId, clientEventId) — nunca duplica", async () => {
     await localDB.executionLogs.put({
       id: "local-id",

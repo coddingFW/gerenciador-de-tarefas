@@ -224,7 +224,23 @@ export class SyncEngine {
     if (!this.db) return;
     const { data, error } = await this.db.from("execution_logs").select("*");
     if (error) throw error;
-    for (const r of (data ?? []) as RemoteLog[]) await this.applyExecutionLog(r);
+    const rows = (data ?? []) as RemoteLog[];
+    for (const r of rows) await this.applyExecutionLog(r);
+
+    // Reconciliação de REMOÇÕES. O apply é só aditivo e o realtime ignora DELETE
+    // de logs (append-only). Sem isto, um log apagado no servidor (limpeza
+    // administrativa) reapareceria para sempre a partir do IndexedDB local.
+    // Removemos localmente os já-sincronizados (`_sync = 1`) ausentes do servidor;
+    // pendentes (`_sync = 0`) são preservados — ainda vão subir no flush.
+    // Guarda: só reconcilia se a página não bateu no teto do PostgREST (1000),
+    // senão o conjunto do servidor estaria incompleto e apagaríamos válidos.
+    if (rows.length < 1000) {
+      const serverIds = new Set(rows.map((r) => r.client_event_id));
+      const stale = await localDB.executionLogs
+        .filter((l) => l._sync === 1 && !serverIds.has(l.clientEventId))
+        .toArray();
+      if (stale.length > 0) await localDB.executionLogs.bulkDelete(stale.map((l) => l.id));
+    }
   }
 
   private async pullReminders(): Promise<void> {
