@@ -11,9 +11,10 @@ import { TasksPage } from "./ui/features/tasks/TasksPage";
 import { CalendarPage } from "./ui/features/calendar/CalendarPage";
 import { CategoriesPage } from "./ui/features/categories/CategoriesPage";
 import { DashboardPage } from "./ui/features/dashboard/DashboardPage";
+import { AdminPage } from "./ui/features/admin/AdminPage";
 import { ProfilePage } from "./ui/features/profile/ProfilePage";
 
-type Tab = "today" | "tasks" | "calendar" | "categories" | "dashboard";
+type Tab = "today" | "tasks" | "calendar" | "categories" | "dashboard" | "admin";
 
 export function App() {
   const { user, loading, backend, signInWithGoogle, signOut } = useAuth();
@@ -100,6 +101,11 @@ export function App() {
             <TabButton active={tab === "dashboard"} onClick={() => setTab("dashboard")}>
               Painel
             </TabButton>
+            {backend && (
+              <TabButton active={tab === "admin"} onClick={() => setTab("admin")}>
+                Admin
+              </TabButton>
+            )}
           </nav>
 
           <main class="flex-1 p-4">
@@ -108,6 +114,7 @@ export function App() {
             {tab === "calendar" && <CalendarPage user={user} />}
             {tab === "categories" && <CategoriesPage user={user} />}
             {tab === "dashboard" && <DashboardPage user={user} />}
+            {tab === "admin" && <AdminPage />}
           </main>
         </>
       )}

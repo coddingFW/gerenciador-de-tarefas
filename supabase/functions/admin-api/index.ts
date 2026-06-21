@@ -62,7 +62,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   // 2. Roteamento.
   if (req.method === "GET") {
-    const [dau, active, completion, topHabits, retention, flags] = await Promise.all([
+    const [totalUsers, dau, active, completion, topHabits, retention, flags] = await Promise.all([
+      admin.from("profiles").select("id", { count: "exact", head: true }),
       admin.from("v_dau").select("day, dau").order("day", { ascending: false }).limit(30),
       admin.from("v_active_users").select("wau, mau").maybeSingle(),
       admin.from("v_completion_rate").select("completion_rate").maybeSingle(),
@@ -75,11 +76,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
       admin.from("feature_flags").select("*").order("key"),
     ]);
 
-    const firstError = [dau, active, completion, topHabits, retention, flags].find((r) => r.error);
+    const firstError = [totalUsers, dau, active, completion, topHabits, retention, flags].find(
+      (r) => r.error,
+    );
     if (firstError?.error) return json(500, { error: firstError.error.message });
 
     return json(200, {
       metrics: {
+        totalUsers: totalUsers.count ?? 0,
         dau: dau.data,
         wau: active.data?.wau ?? 0,
         mau: active.data?.mau ?? 0,

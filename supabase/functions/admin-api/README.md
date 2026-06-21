@@ -15,7 +15,7 @@ Como faz a própria verificação, `verify_jwt` fica desligado no gateway.
 ## Endpoints
 | Método | Corpo                                   | Retorno                                  |
 | ------ | --------------------------------------- | ---------------------------------------- |
-| `GET`  | —                                       | métricas (DAU/WAU/MAU, conclusão, top hábitos, retenção) + feature flags |
+| `GET`  | —                                       | métricas (total de contas, DAU/WAU/MAU, conclusão, top hábitos, retenção) + feature flags |
 | `POST` | `{ action: "set-flag", key, patch }`    | flag atualizada; grava `audit_logs`      |
 
 `patch` aceita apenas: `enabled_global`, `rollout_percentage`,
