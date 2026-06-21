@@ -16,7 +16,9 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const CORS = {
   "access-control-allow-origin": "*",
-  "access-control-allow-headers": "authorization, content-type",
+  // supabase-js anexa `apikey` e `x-client-info` em toda chamada do browser; sem
+  // listá-los aqui o preflight falha e o fetch é bloqueado (CORS).
+  "access-control-allow-headers": "authorization, x-client-info, apikey, content-type",
   "access-control-allow-methods": "GET, POST, OPTIONS",
 };
 

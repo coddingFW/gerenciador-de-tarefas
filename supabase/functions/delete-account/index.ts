@@ -10,10 +10,22 @@
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
+// supabase-js (chamada do browser) anexa `apikey`/`x-client-info` e dispara um
+// preflight CORS; sem estes headers o navegador bloqueia o fetch.
+const CORS = {
+  "access-control-allow-origin": "*",
+  "access-control-allow-headers": "authorization, x-client-info, apikey, content-type",
+  "access-control-allow-methods": "POST, OPTIONS",
+};
+
 const json = (status: number, payload: unknown) =>
-  new Response(JSON.stringify(payload), { status, headers: { "content-type": "application/json" } });
+  new Response(JSON.stringify(payload), {
+    status,
+    headers: { "content-type": "application/json", ...CORS },
+  });
 
 Deno.serve(async (req: Request): Promise<Response> => {
+  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
   if (req.method !== "POST") return json(405, { error: "method_not_allowed" });
 
   const url = Deno.env.get("SUPABASE_URL");
