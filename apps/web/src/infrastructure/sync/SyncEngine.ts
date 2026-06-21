@@ -140,6 +140,36 @@ export class SyncEngine {
     return () => this.listeners.delete(listener);
   }
 
+  /**
+   * Undo de conclusão de hábito: apaga o(s) log(s) do hábito (goal direto,
+   * `task_id` null) no dia informado — no servidor e localmente. Lança se o
+   * servidor recusar (offline/RLS), preservando o estado para o usuário tentar
+   * de novo. A policy `logs_delete` (migration 0016) autoriza só o dono.
+   */
+  async deleteHabitLog(userId: string, goalId: string, occurredOn: string): Promise<void> {
+    if (this.db) {
+      const { error } = await this.db
+        .from("execution_logs")
+        .delete()
+        .eq("user_id", userId)
+        .eq("goal_id", goalId)
+        .eq("occurred_on", occurredOn)
+        .is("task_id", null);
+      if (error) throw error;
+    }
+    const locals = await localDB.executionLogs
+      .filter(
+        (l) =>
+          l.userId === userId &&
+          l.goalId === goalId &&
+          l.occurredOn === occurredOn &&
+          l.taskId === null,
+      )
+      .toArray();
+    if (locals.length > 0) await localDB.executionLogs.bulkDelete(locals.map((l) => l.id));
+    await this.refreshPending();
+  }
+
   async flush(): Promise<void> {
     if (this.running || !this.db || !this.status.online) {
       await this.refreshPending();

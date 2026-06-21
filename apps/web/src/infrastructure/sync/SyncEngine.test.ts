@@ -11,6 +11,12 @@ function fakeSupabase(remote: Record<string, unknown[]>): SupabaseClient {
         select: () => Promise.resolve({ data: remote[table] ?? [], error: null }),
         upsert: () => Promise.resolve({ error: null }),
         update: () => ({ eq: () => Promise.resolve({ error: null }) }),
+        delete: () => {
+          const chain: Record<string, unknown> = {};
+          chain.eq = () => chain;
+          chain.is = () => Promise.resolve({ error: null });
+          return chain;
+        },
       };
     },
   } as unknown as SupabaseClient;
@@ -215,6 +221,57 @@ describe("SyncEngine.pull", () => {
     const logs = (await localDB.executionLogs.toArray()).filter((l) => l.clientEventId === "ce1");
     expect(logs).toHaveLength(1);
     expect(logs[0]!.id).toBe("local-id");
+  });
+});
+
+describe("SyncEngine.deleteHabitLog", () => {
+  beforeEach(clearDB);
+
+  it("apaga o log do hábito do dia (goal direto, task_id null) localmente", async () => {
+    await localDB.executionLogs.bulkPut([
+      // alvo: hábito direto no dia 16
+      {
+        id: "h16",
+        userId: "u1",
+        goalId: "g1",
+        taskId: null,
+        occurredOn: "2026-06-16",
+        minutesSpent: 0,
+        source: "manual",
+        clientEventId: "ce-h16",
+        _sync: 1,
+      },
+      // outro dia — não deve ser tocado
+      {
+        id: "h20",
+        userId: "u1",
+        goalId: "g1",
+        taskId: null,
+        occurredOn: "2026-06-20",
+        minutesSpent: 0,
+        source: "manual",
+        clientEventId: "ce-h20",
+        _sync: 1,
+      },
+      // log de tarefa (task_id != null) no mesmo dia — não deve ser tocado
+      {
+        id: "t16",
+        userId: "u1",
+        goalId: "g1",
+        taskId: "task1",
+        occurredOn: "2026-06-16",
+        minutesSpent: 0,
+        source: "manual",
+        clientEventId: "ce-t16",
+        _sync: 1,
+      },
+    ]);
+
+    await new SyncEngine(fakeSupabase({})).deleteHabitLog("u1", "g1", "2026-06-16");
+
+    expect(await localDB.executionLogs.get("h16")).toBeUndefined();
+    expect(await localDB.executionLogs.get("h20")).toBeDefined();
+    expect(await localDB.executionLogs.get("t16")).toBeDefined();
   });
 });
 

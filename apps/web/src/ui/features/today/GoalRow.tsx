@@ -26,7 +26,6 @@ export function GoalRow({
 }) {
   const [editing, setEditing] = useState(false);
   const [showReminder, setShowReminder] = useState(false);
-  const [locked, setLocked] = useState(false);
 
   if (editing) {
     return <GoalEditor goal={goal} user={user} categories={categories} onClose={() => setEditing(false)} />;
@@ -37,9 +36,14 @@ export function GoalRow({
     void container.sync.flush();
   };
 
+  // Desfaz a conclusão de hoje (apaga o log no servidor + local). O `done` vem
+  // do live query do pai; ao sumir o log, volta a falso → botão "Concluir".
   const undo = async () => {
-    const ok = await container.undoExecution(goal.id, user.id, user.timezone);
-    setLocked(!ok);
+    try {
+      await container.undoExecution(goal.id, user.id, container.clock.today(user.timezone));
+    } catch {
+      // Falha (offline/servidor): mantém como concluído; o usuário tenta de novo.
+    }
   };
 
   return (
@@ -77,22 +81,16 @@ export function GoalRow({
         >
           🗑
         </button>
-        {done && locked ? (
-          <span class="rounded-lg bg-emerald-100 px-3 py-1.5 text-sm font-medium text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300">
-            já sincronizado
-          </span>
-        ) : (
-          <button
-            onClick={() => (done ? void undo() : onComplete())}
-            class={`rounded-lg px-3 py-1.5 text-sm font-medium ${
-              done
-                ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-900 dark:text-emerald-300 dark:hover:bg-emerald-800"
-                : "bg-brand text-white hover:bg-brand-dark"
-            }`}
-          >
-            {done ? "✓ Feito (desfazer)" : "Concluir"}
-          </button>
-        )}
+        <button
+          onClick={() => (done ? void undo() : onComplete())}
+          class={`rounded-lg px-3 py-1.5 text-sm font-medium ${
+            done
+              ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-900 dark:text-emerald-300 dark:hover:bg-emerald-800"
+              : "bg-brand text-white hover:bg-brand-dark"
+          }`}
+        >
+          {done ? "✓ Feito (desfazer)" : "Concluir"}
+        </button>
       </div>
       </div>
       {showReminder && (

@@ -269,11 +269,9 @@ function DayDetail({
   today: IsoDate;
 }) {
   const isToday = selected === today;
-  // Hoje: todos os hábitos ativos (concluíveis). Outros dias: só os concluídos
-  // naquele dia (read-only — o domínio registra execução para "hoje").
-  const habitRows = isToday
-    ? goals.map((g) => ({ goal: g, done: doneHabits.has(g.id) }))
-    : goals.filter((g) => doneHabits.has(g.id)).map((g) => ({ goal: g, done: true }));
+  // O calendário mostra só o que foi CONCLUÍDO naquele dia. Concluir hábitos é
+  // na aba Hoje; aqui só dá para desfazer (apaga o log no servidor + local).
+  const completedHabits = goals.filter((g) => doneHabits.has(g.id));
 
   return (
     <div class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -294,12 +292,14 @@ function DayDetail({
       )}
       <AddOnDay user={user} date={selected} />
 
-      {habitRows.length > 0 && (
+      {completedHabits.length > 0 && (
         <div class="mt-4">
-          <p class="mb-1 text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">Hábitos</p>
+          <p class="mb-1 text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+            Hábitos concluídos
+          </p>
           <ul class="flex flex-col gap-2">
-            {habitRows.map(({ goal, done }) => (
-              <HabitItem key={goal.id} goal={goal} done={done} canComplete={isToday} user={user} />
+            {completedHabits.map((goal) => (
+              <HabitItem key={goal.id} goal={goal} occurredOn={selected} user={user} />
             ))}
           </ul>
         </div>
@@ -310,64 +310,31 @@ function DayDetail({
 
 function HabitItem({
   goal,
-  done,
-  canComplete,
+  occurredOn,
   user,
 }: {
   goal: Goal;
-  done: boolean;
-  canComplete: boolean;
+  occurredOn: IsoDate;
   user: CurrentUser;
 }) {
-  const [locked, setLocked] = useState(false);
-  const complete = async () => {
-    await container.logExecution.execute({
-      goalId: goal.id,
-      userId: user.id,
-      timezone: user.timezone,
-      clientEventId: crypto.randomUUID(),
-    });
-    void container.sync.flush();
-  };
+  // Desfaz a conclusão do hábito naquele dia (servidor + local). Ao apagar o
+  // log, o live query atualiza e o item some da lista de concluídos.
   const undo = async () => {
-    const ok = await container.undoExecution(goal.id, user.id, user.timezone);
-    if (ok) setLocked(false);
-    else setLocked(true);
+    try {
+      await container.undoExecution(goal.id, user.id, occurredOn);
+    } catch {
+      // Falha (offline/servidor): mantém; o usuário tenta de novo.
+    }
   };
   return (
     <li class="flex items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <p
-        class={`min-w-0 truncate text-sm font-medium ${
-          done ? "text-slate-400 line-through dark:text-slate-500" : "text-slate-800 dark:text-slate-100"
-        }`}
+      <p class="min-w-0 truncate text-sm font-medium text-slate-800 dark:text-slate-100">{goal.title}</p>
+      <button
+        onClick={() => void undo()}
+        class="shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-red-600 dark:text-slate-400 dark:hover:bg-slate-800"
       >
-        {goal.title}
-      </p>
-      {done ? (
-        canComplete ? (
-          locked ? (
-            <span class="shrink-0 text-xs text-slate-400 dark:text-slate-500">já sincronizado</span>
-          ) : (
-            <button
-              onClick={() => void undo()}
-              class="shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
-            >
-              Desfazer
-            </button>
-          )
-        ) : (
-          <span class="shrink-0 text-xs font-medium text-emerald-600 dark:text-emerald-400">✓ feito</span>
-        )
-      ) : canComplete ? (
-        <button
-          onClick={() => void complete()}
-          class="shrink-0 rounded-lg bg-brand px-2.5 py-1.5 text-xs font-medium text-white hover:bg-brand-dark"
-        >
-          Concluir
-        </button>
-      ) : (
-        <span class="shrink-0 text-xs text-slate-400 dark:text-slate-500">—</span>
-      )}
+        Desfazer
+      </button>
     </li>
   );
 }

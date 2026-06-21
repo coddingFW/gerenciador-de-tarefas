@@ -45,14 +45,16 @@ const categories = new LocalCategoryRepository();
 const logs = new LocalExecutionLogRepository();
 const profiles = new LocalProfileRepository();
 const reminders = new LocalReminderRepository();
+const sync = new SyncEngine(supabase);
 
 export const container = {
   createGoal: new CreateGoal(goals, bus, clock, ids),
   editGoal: new EditGoal(goals, bus),
   archiveGoal: new ArchiveGoal(goals, bus, clock),
   logExecution: new LogExecution(goals, logs, bus, clock),
-  undoExecution: (goalId: string, userId: string, timezone: string) =>
-    logs.removeIfUnsynced(userId, goalId, clock.today(timezone)),
+  /** Undo de conclusão de hábito num dia específico (servidor + local). */
+  undoExecution: (goalId: string, userId: string, occurredOn: string) =>
+    sync.deleteHabitLog(userId, goalId, occurredOn),
   completeTask: new CompleteTask(tasks, logs, bus, clock),
   createTask: new CreateTask(tasks, bus, ids),
   reopenTask: new ReopenTask(tasks),
@@ -67,6 +69,6 @@ export const container = {
   scheduleReminder: new ScheduleReminder(reminders, bus, clock, ids),
   cancelReminder: new CancelReminder(reminders, bus),
   reminders,
-  sync: new SyncEngine(supabase),
+  sync,
   clock,
 };
