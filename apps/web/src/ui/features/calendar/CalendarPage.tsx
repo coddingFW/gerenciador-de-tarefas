@@ -319,6 +319,7 @@ function HabitItem({
   canComplete: boolean;
   user: CurrentUser;
 }) {
+  const [locked, setLocked] = useState(false);
   const complete = async () => {
     await container.logExecution.execute({
       goalId: goal.id,
@@ -327,6 +328,11 @@ function HabitItem({
       clientEventId: crypto.randomUUID(),
     });
     void container.sync.flush();
+  };
+  const undo = async () => {
+    const ok = await container.undoExecution(goal.id, user.id, user.timezone);
+    if (ok) setLocked(false);
+    else setLocked(true);
   };
   return (
     <li class="flex items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -338,7 +344,20 @@ function HabitItem({
         {goal.title}
       </p>
       {done ? (
-        <span class="shrink-0 text-xs font-medium text-emerald-600 dark:text-emerald-400">✓ feito</span>
+        canComplete ? (
+          locked ? (
+            <span class="shrink-0 text-xs text-slate-400 dark:text-slate-500">já sincronizado</span>
+          ) : (
+            <button
+              onClick={() => void undo()}
+              class="shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+            >
+              Desfazer
+            </button>
+          )
+        ) : (
+          <span class="shrink-0 text-xs font-medium text-emerald-600 dark:text-emerald-400">✓ feito</span>
+        )
       ) : canComplete ? (
         <button
           onClick={() => void complete()}

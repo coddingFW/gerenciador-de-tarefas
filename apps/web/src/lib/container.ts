@@ -51,6 +51,8 @@ export const container = {
   editGoal: new EditGoal(goals, bus),
   archiveGoal: new ArchiveGoal(goals, bus, clock),
   logExecution: new LogExecution(goals, logs, bus, clock),
+  undoExecution: (goalId: string, userId: string, timezone: string) =>
+    logs.removeIfUnsynced(userId, goalId, clock.today(timezone)),
   completeTask: new CompleteTask(tasks, logs, bus, clock),
   createTask: new CreateTask(tasks, bus, ids),
   reopenTask: new ReopenTask(tasks),

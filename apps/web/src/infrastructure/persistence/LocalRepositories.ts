@@ -132,4 +132,23 @@ export class LocalExecutionLogRepository implements IExecutionLogRepository {
     const rows = await localDB.executionLogs.where("goalId").equals(goalId).toArray();
     return rows.map(({ _sync, id, ...l }) => l);
   }
+  /**
+   * "Desfazer" local de um toque errado em "Concluir" hábito. NÃO existe policy
+   * de DELETE em `execution_logs` no servidor (proposital — ver 0002_rls_policies.sql,
+   * correção de histórico = log compensatório). Por isso só remove enquanto o log
+   * ainda não foi sincronizado (`_sync === 0`); depois disso é permanente.
+   * Retorna `false` quando já sincronizado (ou inexistente) — undo não é possível.
+   */
+  async removeIfUnsynced(userId: string, goalId: string, occurredOn: IsoDate): Promise<boolean> {
+    const row = await localDB.executionLogs
+      .where("goalId")
+      .equals(goalId)
+      .filter(
+        (l) => l.userId === userId && l.occurredOn === occurredOn && l.taskId === null && l._sync === 0,
+      )
+      .first();
+    if (!row) return false;
+    await localDB.executionLogs.delete(row.id);
+    return true;
+  }
 }

@@ -25,7 +25,10 @@ export function DashboardPage({ user }: { user: CurrentUser }) {
     () => localDB.executionLogs.where("userId").equals(user.id).toArray(),
     [user.id],
   );
-  const logs = logsRaw ?? [];
+  // Só execuções de hábito (goalId != null) — exclui logs de conclusão de
+  // tarefas avulsas, que não devem contar na "Conclusão"/Score/Histórico daqui.
+  const habitLogs = logsRaw?.filter((l) => l.goalId != null);
+  const logs = habitLogs ?? [];
 
   const logsByGoal = new Map<string, ExecutionLog[]>();
   for (const l of logs) {
@@ -65,7 +68,7 @@ export function DashboardPage({ user }: { user: CurrentUser }) {
         <Stat label="Tempo total" value={`${totalMinutes} min`} />
       </div>
 
-      <HistorySection logs={logsRaw} today={today} />
+      <HistorySection logs={habitLogs} today={today} />
 
       <section>
         <h2 class="mb-2 text-sm font-semibold text-slate-700 dark:text-slate-200">Por hábito</h2>
