@@ -13,8 +13,10 @@ histórico de design do produto.
 - **Event-Driven** — toda mutação emite um Domain Event (outbox `domain_events`)
   consumido por métricas, auditoria, analytics e IA.
 - **Offline-first** — IndexedDB (Dexie) + fila outbox; `ExecutionLog` é
-  append-only e idempotente por `clientEventId`, eliminando a maior parte dos
-  conflitos de sincronização.
+  imutável em conteúdo e idempotente por `clientEventId`, eliminando a maior
+  parte dos conflitos de sincronização. Exceção (migration `0016`): o dono pode
+  **apagar** os próprios logs (undo de conclusão = liga-desliga); a streak é
+  recalculada no delete. Não há UPDATE — só insert/delete.
 
 ## Camadas
 ```
