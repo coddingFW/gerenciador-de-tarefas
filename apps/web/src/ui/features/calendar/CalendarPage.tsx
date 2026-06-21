@@ -2,6 +2,7 @@ import { useState } from "preact/hooks";
 import { useLiveQuery } from "dexie-react-hooks";
 import type { Goal, IsoDate, Task } from "@habit/core";
 import { localDB } from "../../../infrastructure/persistence/db";
+import { DEFAULT_CATEGORY_COLOR } from "../categories/constants";
 import { container } from "../../../lib/container";
 import type { CurrentUser } from "../../../lib/auth";
 import {
@@ -55,6 +56,21 @@ export function CalendarPage({ user }: { user: CurrentUser }) {
       [user.id],
     ) ?? [];
 
+  const categories =
+    useLiveQuery(
+      () => localDB.categories.where("userId").equals(user.id).toArray(),
+      [user.id],
+    ) ?? [];
+
+  const categoryColorByGoalId = new Map<string, string>();
+  const categoryColorById = new Map(categories.map((c) => [c.id, c.color ?? DEFAULT_CATEGORY_COLOR]));
+  for (const g of goals) {
+    categoryColorByGoalId.set(
+      g.id,
+      g.categoryId ? categoryColorById.get(g.categoryId) ?? DEFAULT_CATEGORY_COLOR : DEFAULT_CATEGORY_COLOR,
+    );
+  }
+
   const tasksByDate = new Map<string, Task[]>();
   for (const t of tasks) {
     if (!t.dueDate) continue;
@@ -91,6 +107,7 @@ export function CalendarPage({ user }: { user: CurrentUser }) {
           setSelected={setSelected}
           tasksByDate={tasksByDate}
           doneHabitsByDate={doneHabitsByDate}
+          categoryColorByGoalId={categoryColorByGoalId}
           goals={goals}
           user={user}
         />
@@ -109,6 +126,7 @@ function MonthView({
   setSelected,
   tasksByDate,
   doneHabitsByDate,
+  categoryColorByGoalId,
   goals,
   user,
 }: {
@@ -119,6 +137,7 @@ function MonthView({
   setSelected: (d: IsoDate) => void;
   tasksByDate: Map<string, Task[]>;
   doneHabitsByDate: Map<string, Set<string>>;
+  categoryColorByGoalId: Map<string, string>;
   goals: Goal[];
   user: CurrentUser;
 }) {
@@ -173,6 +192,8 @@ function MonthView({
           const dIso = iso(view.y, view.m, d);
           const dayTasks = tasksByDate.get(dIso) ?? [];
           const doneCount = dayTasks.filter((t) => t.status === "done").length;
+          const doneHabitGoalIds = Array.from(doneHabitsByDate.get(dIso) ?? []);
+          const doneHabitsCount = doneHabitGoalIds.length;
           const isToday = dIso === today;
           const isSel = dIso === selected;
           const overdue = dIso < today && dayTasks.some((t) => t.status === "pending");
@@ -181,11 +202,17 @@ function MonthView({
             : overdue
               ? "font-medium text-red-600 dark:text-red-400"
               : "text-slate-600 dark:text-slate-300";
+          const label = [
+            doneCount > 0 ? `${doneCount} tarefa(s) concluída(s)` : null,
+            doneHabitsCount > 0 ? `${doneHabitsCount} hábito(s) concluído(s)` : null,
+          ]
+            .filter(Boolean)
+            .join(", ");
           return (
             <button
               key={dIso}
               onClick={() => setSelected(dIso)}
-              aria-label={`${dayLabel(dIso)}${doneCount > 0 ? ` — ${doneCount} tarefa(s) concluída(s)` : ""}`}
+              aria-label={`${dayLabel(dIso)}${label ? ` — ${label}` : ""}`}
               aria-pressed={isSel}
               class={`flex aspect-square flex-col items-center justify-center gap-1 rounded-lg text-sm ${base} ${
                 isToday && !isSel ? "ring-2 ring-brand" : ""
@@ -195,8 +222,17 @@ function MonthView({
               <span class="flex h-1.5 items-center gap-0.5">
                 {Array.from({ length: Math.min(doneCount, MAX_DOTS) }).map((_, j) => (
                   <span
-                    key={j}
+                    key={`t${j}`}
                     class={`h-1.5 w-1.5 rounded-full ${isSel ? "bg-white" : "bg-emerald-500"}`}
+                  />
+                ))}
+                {doneHabitGoalIds.slice(0, MAX_DOTS).map((goalId, j) => (
+                  <span
+                    key={`h${j}`}
+                    class="h-1.5 w-1.5 rounded-full"
+                    style={{
+                      backgroundColor: isSel ? "#fff" : categoryColorByGoalId.get(goalId) ?? DEFAULT_CATEGORY_COLOR,
+                    }}
                   />
                 ))}
               </span>
